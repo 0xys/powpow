@@ -55,6 +55,16 @@ export class Transaction {
         return Buffer.concat(bufs)
     }
 
+    encodedLen = (): number => {
+        let destsSize = 0
+        for (const dest of this.dests) {
+            destsSize += dest.encodedLen()
+        }
+
+        // from + destLen + [dests] + signature
+        return 33 + 4 + destsSize + 65
+    }
+
     static decode = (blob: Buffer): Transaction => {
         const from = blob.slice(0, 33)   // 33 byte
 
