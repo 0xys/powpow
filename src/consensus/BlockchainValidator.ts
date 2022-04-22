@@ -1,28 +1,31 @@
 import { Block } from "../types/block";
+import { Blockchain } from "../types/blockchain";
 import { BlockValidator } from "./BlockValidator";
+import { ConsensusEngine } from "./ConsensusEngine"
+import { TransactionVerifier } from "./TransactionVerifier";
 
 export class BlockchainValidator {
-    private blocks: Block[]
-    
-    constructor(private validator: BlockValidator) {
-        this.blocks = []
+    private validator: BlockValidator
+
+    constructor(verifier: TransactionVerifier, consensusEngine: ConsensusEngine) {
+        this.validator = new BlockValidator(verifier, consensusEngine)
     }
 
-    tryAppendBlock = (block: Block): {ok: boolean, message: string} => {
-        this.blocks.push(block)
-        const { ok, } = this.validateEntireChain()
+    tryAppendBlock = (blockchain: Blockchain, block: Block): {ok: boolean, message: string} => {
+        blockchain.blocks.push(block)
+        const { ok, } = this.validateEntireChain(blockchain)
         if (!ok) {
-            this.blocks.pop()   // remove invalid block just added
+            blockchain.blocks.pop()   // remove invalid block just added
             return { ok: false, message: 'new block violates consensus' }
         }
 
         return { ok: true, message: '' }
     }
 
-    validateEntireChain = (): {ok: boolean, message: string} => {
+    validateEntireChain = (blockchain: Blockchain): {ok: boolean, message: string} => {
         let balances: {[address: string]: bigint} = {}
 
-        for (const block of this.blocks) {
+        for (const block of blockchain.blocks) {
             if (!this.validator.validate(block)) {
                 return { ok: false, message: `validation failed at height ${block.getHeight()}`}
             }
