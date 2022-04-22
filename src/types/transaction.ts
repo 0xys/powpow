@@ -55,6 +55,10 @@ export class Transaction {
         return hashed
     }
 
+    hashString = (): string => {
+        return this.hash().toString('hex')
+    }
+
     encode = (): Buffer => {
         let bufs: Buffer[] = []
         bufs.push(this.from)
