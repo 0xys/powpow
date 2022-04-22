@@ -8,8 +8,15 @@ export class BlockchainValidator {
         this.blocks = []
     }
 
-    appendBlock = (block: Block) => {
+    tryAppendBlock = (block: Block): {ok: boolean, message: string} => {
         this.blocks.push(block)
+        const { ok, } = this.validateEntireChain()
+        if (!ok) {
+            this.blocks.pop()   // remove invalid block just added
+            return { ok: false, message: 'new block violates consensus' }
+        }
+
+        return { ok: true, message: '' }
     }
 
     validateEntireChain = (): {ok: boolean, message: string} => {
@@ -56,4 +63,5 @@ export class BlockchainValidator {
         return { ok: true, message: '' }
     }
 
+    
 }

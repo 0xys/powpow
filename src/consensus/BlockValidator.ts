@@ -1,13 +1,19 @@
 import { Block } from "../types/block";
+import { ConsensusEngine } from "./ConsensusEngine";
 import { TransactionVerifier } from "./TransactionVerifier";
 
 export class BlockValidator {
 
-    constructor(private verifier: TransactionVerifier) {
+    constructor(private verifier: TransactionVerifier, private engine: ConsensusEngine) {
 
     }
 
     validate = (block: Block): boolean => {
+        // check if the score of the given block exceeds difficulty target
+        if (!this.engine.verifyDifficulty(block)) {
+            return false;
+        }
+
         let coinbaseCount = 0
         for (let i = 0; i < block.getTransactions().length; i++) {
             const tx = block.getTransactions()[i]
