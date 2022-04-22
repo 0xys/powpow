@@ -12,7 +12,7 @@ export class BlockchainValidator {
         this.blocks.push(block)
     }
 
-    validateChain = (): {ok: boolean, message: string} => {
+    validateEntireChain = (): {ok: boolean, message: string} => {
         let balances: {[address: string]: bigint} = {}
 
         for (const block of this.blocks) {
@@ -21,19 +21,31 @@ export class BlockchainValidator {
             }
 
             for (const tx of block.getTransactions()) {
+                let miner: string = ''
                 if (tx.isCoinbase()) {
                     const dest = tx.getDests()[0]
-                    balances[dest.getAddressString()] += dest.getAmount()
+                    miner = dest.getAddressString()
+                    balances[miner] += dest.getAmount()
                     continue
                 }
 
                 let sum: bigint = BigInt(0)
                 for (const dest of tx.getDests()) {
                     sum += dest.getAmount()
+
+                    //  recipient receives sent token
                     balances[dest.getAddressString()] += dest.getAmount()
                 }
 
-                if (balances[tx.getFromAddressString()] < sum) {
+                //  miner receives fee
+                balances[miner] += tx.getFee()
+
+                //  sender sends sum and fee
+                const sender = tx.getFromAddressString()
+                balances[sender] -= sum + tx.getFee()
+
+                //  sender's balance must be non-negative
+                if (balances[sender] < 0) {
                     return { ok: false, message: `tx ${tx.hash()} tried to send too much amount`}
                 }
             }

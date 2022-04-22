@@ -9,8 +9,14 @@ export class BlockValidator {
 
     validate = (block: Block): boolean => {
         let coinbaseCount = 0
-        for (const tx of block.getTransactions()) {
+        for (let i = 0; i < block.getTransactions().length; i++) {
+            const tx = block.getTransactions()[i]
+
             if (tx.isCoinbase()) {
+                if (i != 0) {
+                    // coinbase must be at the top of the block
+                    return false
+                }
                 coinbaseCount += 1
             }
 
