@@ -7,7 +7,7 @@ export class TransactionVerifier {
         const signature = transaction.getSignature()
 
         //  for coinbase transaction
-        if (this.isCoinbase(transaction)) {
+        if (transaction.isCoinbase()) {
             if (transaction.getDests().length != 1) {
                 return false    // dests must be of length = 1
             }
@@ -15,14 +15,15 @@ export class TransactionVerifier {
             return secp256k1.ecdsaVerify(signature, body, beneficiary.getAddress())
         }
 
+        //  token must be sent to someone
+        if (transaction.getDests().length == 0) {
+            return false
+        }
+
         return secp256k1.ecdsaVerify(signature, body, transaction.getFromAddress())
     }
 
     verifyConsensus = (transaction: Transaction): boolean => {
         return false
-    }
-
-    private isCoinbase = (transaction: Transaction): boolean => {
-        return transaction.getFromAddress() == godAddress
     }
 }

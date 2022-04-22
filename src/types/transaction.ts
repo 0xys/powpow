@@ -102,6 +102,10 @@ export class Transaction {
 
         return new Transaction(godAddress, [dest], signature)
     }
+
+    isCoinbase = (): boolean => {
+        return this.getFromAddress() == godAddress
+    }
 }
 
 export class Destination {
