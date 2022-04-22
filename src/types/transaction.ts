@@ -2,6 +2,7 @@ import { toBigIntBE, toBigIntLE, toBufferBE, toBufferLE } from 'bigint-buffer';
 import { createHash } from 'crypto';
 import secp256k1 from 'secp256k1'
 
+export const godAddress = Buffer.allocUnsafe(33).fill(0)
 
 export class Transaction {
     constructor(private from: Buffer, private dests: Destination[], private signature: Buffer = Buffer.allocUnsafe(65)) {
@@ -17,6 +18,10 @@ export class Transaction {
 
     getDests = (): Destination[] => {
         return this.dests
+    }
+
+    getSignature = (): Buffer => {
+        return this.signature
     }
 
     toSignable = (): Buffer => {
@@ -85,19 +90,17 @@ export class Transaction {
     }
 
     static coinbase = (beneficiaryPrivateKey: Buffer, amount: bigint): Transaction => {
-        const god = Buffer.allocUnsafe(33).fill(0)
-
         const beneficiaryPubkey = secp256k1.publicKeyCreate(beneficiaryPrivateKey, true)
 
         const dest = new Destination(Buffer.from(beneficiaryPubkey), amount, Buffer.from([]))
         
-        const unsigned = new Transaction(god, [dest])
+        const unsigned = new Transaction(godAddress, [dest])
         
         const sig = secp256k1.ecdsaSign(unsigned.hash(), beneficiaryPrivateKey)
         const recIdBuf = Buffer.from([sig.recid])
         const signature = Buffer.concat([sig.signature, recIdBuf])
 
-        return new Transaction(god, [dest], signature)
+        return new Transaction(godAddress, [dest], signature)
     }
 }
 
