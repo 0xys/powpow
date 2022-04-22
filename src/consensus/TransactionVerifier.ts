@@ -11,7 +11,15 @@ export class TransactionVerifier {
             if (transaction.getDests().length != 1) {
                 return false    // dests must be of length = 1
             }
+
+            //  coinbase transaction must not pay fee
+            if (transaction.getFee() != BigInt(0)) {
+                return false
+            }
+
             const beneficiary = transaction.getDests()[0]
+            
+            //  coinbase transaction is signed by first dest
             return secp256k1.ecdsaVerify(signature, body, beneficiary.getAddress())
         }
 

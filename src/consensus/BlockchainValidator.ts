@@ -25,6 +25,8 @@ export class BlockchainValidator {
                 if (tx.isCoinbase()) {
                     const dest = tx.getDests()[0]
                     miner = dest.getAddressString()
+
+                    // miner receives mined token
                     balances[miner] += dest.getAmount()
                     continue
                 }
