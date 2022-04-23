@@ -2,11 +2,13 @@ import { Battery, Machine } from "./machine";
 import { Wallet } from "./wallet";
 import bip39 from "bip39"
 import hdkey from 'hdkey'
+import { Mempool } from "./mempool";
 
 export const defaultNumOfWallets = 6
 
 export class Miner {
     private wallets: Wallet[] = []
+    private mempool: Mempool;
 
     constructor(mnemonic: string, private name: string, private machines: Machine[], private batteries: Battery[]){
         const seed = bip39.mnemonicToSeedSync(mnemonic)
@@ -16,6 +18,8 @@ export class Miner {
             const wallet = new Wallet(node.privateKey)
             this.wallets.push(wallet)
         }
+
+        this.mempool = Mempool.Empty()
     }
 
     getName = (): string => {
@@ -28,6 +32,10 @@ export class Miner {
 
     getWallet = (index: number): Wallet => {
         return this.wallets[index]
+    }
+
+    getMempool = (): Mempool => {
+        return this.mempool
     }
 
     getMachines = (): Machine[] => {

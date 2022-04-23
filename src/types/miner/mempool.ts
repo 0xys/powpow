@@ -50,4 +50,8 @@ export class Mempool {
         this.mapping.set(hashString, tx)
         return true
     }
+
+    static Empty = (): Mempool => {
+        return new Mempool([])
+    }
 }
