@@ -20,6 +20,11 @@ const SocketHandler = (req: IncomingMessage, res: any) => {
                 console.log('input-change', msg)
                 socket.broadcast.emit('update-input', msg)
             })
+
+            socket.on('send', msg => {
+                console.log('send', msg)
+                socket.broadcast.emit('new-block', msg)
+            })
         })
     }
     res.end()
