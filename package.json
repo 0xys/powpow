@@ -9,7 +9,10 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@types/hdkey": "^2.0.1",
     "bigint-buffer": "^1.1.5",
+    "bip39": "^3.0.4",
+    "hdkey": "^2.0.1",
     "next": "12.1.5",
     "react": "18.0.0",
     "react-dom": "18.0.0",

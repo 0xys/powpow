@@ -35,6 +35,10 @@ export class Transaction {
         return this.signature
     }
 
+    setSignature = (signature: Buffer) => {
+        this.signature = signature
+    }
+
     toSignable = (): Buffer => {
         let bufs: Buffer[] = []
         bufs.push(this.from)
