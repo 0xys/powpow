@@ -1,4 +1,4 @@
-import { godAddress, Transaction } from "../types/transaction";
+import { godAddress, Transaction } from "../types/blockchain/transaction";
 import secp256k1 from 'secp256k1'
 
 export class TransactionVerifier {

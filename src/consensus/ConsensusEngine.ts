@@ -1,5 +1,5 @@
 import { toBigIntBE } from "bigint-buffer";
-import { Block } from "../types/block";
+import { Block } from "../types/blockchain/block";
 
 export class ConsensusEngine {
     verifyDifficulty = (block: Block): boolean => {

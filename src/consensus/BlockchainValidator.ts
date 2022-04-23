@@ -1,5 +1,5 @@
-import { Block } from "../types/block";
-import { Blockchain } from "../types/blockchain";
+import { Block } from "../types/blockchain/block";
+import { Blockchain } from "../types/blockchain/blockchain";
 import { BlockValidator } from "./BlockValidator";
 import { ConsensusEngine } from "./ConsensusEngine"
 import { TransactionVerifier } from "./TransactionVerifier";

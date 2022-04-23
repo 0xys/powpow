@@ -1,4 +1,4 @@
-import { Block } from "../types/block";
+import { Block } from "../types/blockchain/block";
 import { ConsensusEngine } from "./ConsensusEngine";
 import { TransactionVerifier } from "./TransactionVerifier";
 
