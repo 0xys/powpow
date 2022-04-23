@@ -3,6 +3,14 @@ export class Machine {
 
     }
 
+    getHashrate = (): number => {
+        return this.hashrate
+    }
+
+    getConsumptionRate = (): number => {
+        return this.consumptionRate
+    }
+
     static Default = (): Machine => {
         return new Machine(10, 3)
     }
@@ -11,6 +19,10 @@ export class Machine {
 export class Battery {
     constructor(private cap: number) {
 
+    }
+
+    getCapacity = (): number => {
+        return this.cap
     }
 
     static Default = (): Battery => {
