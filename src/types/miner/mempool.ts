@@ -25,12 +25,14 @@ export class Mempool {
         return { found: true, tx: tx }
     }
 
-    removeTransactionByHash = (hash: Buffer): boolean => {
+    removeTransactionByHash = (hash: Buffer): Transaction|undefined => {
         const hashString = hash.toString('hex')
-        return this.mapping.delete(hashString)
+        return this.removeTransactionByHashString(hashString)
     }
-    removeTransactionByHashString = (hashString: string): boolean => {
-        return this.mapping.delete(hashString)
+    removeTransactionByHashString = (hashString: string): Transaction|undefined => {
+        const tx = this.mapping.get(hashString)
+        this.mapping.delete(hashString)
+        return tx
     }
 
     contains = (hash: Buffer): boolean => {

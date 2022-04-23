@@ -28,6 +28,9 @@ export class Block {
     getPrevBlockHash = (): Buffer => {
         return this.prevBlockHash
     }
+    getPrevBlockHashString = (): string => {
+        return this.getPrevBlockHash().toString('hex')
+    }
 
     //  4 byte
     getDifficultyTarget = (): Buffer => {
@@ -47,6 +50,9 @@ export class Block {
         const body = this.encode()
         const hashed = createHash('sha256').update(body).digest()
         return hashed
+    }
+    hashString = (): string => {
+        return this.hash().toString('hex')
     }
 
     encode = (): Buffer => {
