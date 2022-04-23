@@ -1,4 +1,4 @@
-import { Transaction } from "./transaction";
+import { Transaction } from "../blockchain/transaction";
 
 export class Mempool {
     private mapping: Map<string, Transaction>
