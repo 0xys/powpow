@@ -102,6 +102,13 @@ export class Block {
 
         return new Block(version, height, prevBlockHash, txs, nonce, difficultyTarget)
     }
+
+    static Genesis = (version: bigint, minerAddress: Buffer): Block => {
+        const transactions: Transaction[] = [
+            Transaction.Coinbase(minerAddress, BigInt(1_000_000))
+        ] 
+        return new Block(version, BigInt(0), Buffer.allocUnsafe(32).fill(0), transactions, BigInt(0))
+    }
 }
 
 //  4 byte

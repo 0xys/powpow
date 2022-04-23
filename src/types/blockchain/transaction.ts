@@ -114,7 +114,7 @@ export class Transaction {
         return new Transaction(from, fee, dests, signature)
     }
 
-    static coinbase = (beneficiaryPrivateKey: Buffer, amount: bigint): Transaction => {
+    static Coinbase = (beneficiaryPrivateKey: Buffer, amount: bigint): Transaction => {
         const beneficiaryPubkey = secp256k1.publicKeyCreate(beneficiaryPrivateKey, true)
 
         const dest = new Destination(Buffer.from(beneficiaryPubkey), amount, Buffer.from([]))
