@@ -65,6 +65,9 @@ export class BlockFactory {
     incrementNonce = () => {
         this.nonce += BigInt(1)
     }
+    decrementNonce = () => {
+        this.nonce -= BigInt(1)
+    }
 
     getNonce = (): bigint => {
         return this.nonce
@@ -72,15 +75,9 @@ export class BlockFactory {
     getNonceBuffer = (): Buffer => {
         return toBufferBE(this.nonce, 4)
     }
-}
 
-//  4 byte
-const conv = (num: number): Buffer => {
-    const arr = [
-        (num >> 24) & 255,
-        (num >> 16) & 255,
-        (num >> 8) & 255,
-        num & 255,
-    ];
-    return Buffer.from(arr)
+    finalize = (): Block => {
+        const block = new Block(this.version, this.height, this.prevBlockHash, this.transactions, this.nonce, this.difficultyTarget)
+        return block
+    }
 }
