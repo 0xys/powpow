@@ -1,5 +1,5 @@
 import secp256k1 from 'secp256k1'
-import { Transaction } from '../transaction'
+import { Transaction } from '../blockchain/transaction'
 
 export class Wallet {
     constructor(private privateKey: Buffer){

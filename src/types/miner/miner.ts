@@ -1,6 +1,6 @@
 import { Battery, Machine } from "./machine";
 import { Wallet } from "./wallet";
-import bip39 from "bip39"
+import * as bip39 from "bip39"
 import hdkey from 'hdkey'
 import { Mempool } from "./mempool";
 
