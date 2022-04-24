@@ -1,7 +1,12 @@
 import { godAddress, Transaction } from "../types/blockchain/transaction";
 import secp256k1 from 'secp256k1'
 
-export class TransactionVerifier {
+export interface TransactionVerifierInterface {
+    verifySignature(transaction: Transaction): boolean
+    verifyConsensus(transaction: Transaction): boolean
+}
+
+export class TransactionVerifier implements TransactionVerifierInterface {
     verifySignature = (transaction: Transaction): boolean => {
         const body = transaction.hash()
         const signature = transaction.getSignature()

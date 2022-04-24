@@ -1,7 +1,7 @@
 import { Block } from "../types/blockchain/block";
 import { Blockchain } from "../types/blockchain/blockchain";
-import { ConsensusEngine } from "./consensus_engine"
-import { TransactionVerifier } from "./transaction_verifiier";
+import { ConsensusEngineInterface } from "./consensus_engine"
+import { TransactionVerifierInterface } from "./transaction_verifiier";
 
 class Journal {
     address: string
@@ -84,7 +84,10 @@ export class ChainValidationError {
 export class BlockchainValidator {
     private cache: BalanceMapCache = BalanceMapCache.Empty()
 
-    constructor(private verifier: TransactionVerifier, private consensusEngine: ConsensusEngine) {
+    constructor(
+        private verifier: TransactionVerifierInterface,
+        private consensusEngine: ConsensusEngineInterface
+    ) {
 
     }
 

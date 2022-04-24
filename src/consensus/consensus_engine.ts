@@ -1,7 +1,11 @@
 import { toBigIntBE } from "bigint-buffer";
 import { Block } from "../types/blockchain/block";
 
-export class ConsensusEngine {
+export interface ConsensusEngineInterface {
+    verifyDifficulty(block: Block): boolean
+}
+
+export class ConsensusEngine implements ConsensusEngineInterface {
     verifyDifficulty = (block: Block): boolean => {
         const difficultyBuf = block.getDifficultyTarget()
         const difficulty = toBigIntBE(difficultyBuf)
