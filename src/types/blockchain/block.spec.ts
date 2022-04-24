@@ -54,3 +54,56 @@ test('block with single transaction', () => {
 
     expect(decoded.getDifficultyTarget().toString('hex')).toBe(block.getDifficultyTarget().toString('hex'))
 })
+
+test('block with multiple transactions', () => {
+    const version = BigInt(1234)
+    const height = BigInt(10001)
+    const prevBlockHashBuffer = Buffer.from('00000000000000000008a4832077c24e1573fa226f6884fe69a106c7be6d00ad', 'hex')
+    const nonce = BigInt(1111)
+
+    const fee = BigInt(100)
+    const transactions: Transaction[] = []
+    const size = 10
+    for (let i = 0; i < size; i++) {
+        const fromWallet = createWallet(mnemonic, i)
+
+        const destWallet = createWallet(mnemonic, 100 + i)
+        const destAddress = destWallet.getAddressBuffer()
+        const destAmount = BigInt(123456)
+        const destMessage = Buffer.from('hello', 'utf8')
+        const dests = [new Destination(destAddress, destAmount, destMessage)]
+        const tx = new Transaction(fromWallet.getAddressBuffer(), fee, dests)
+        transactions.push(tx)
+    }
+
+    const block = new Block(version, height, prevBlockHashBuffer, transactions, nonce)
+
+    const encoded = block.encode()
+
+    const decoded = Block.decode(encoded)
+
+    expect(decoded.hashString()).toBe(block.hashString())
+
+    expect(decoded.getVersion()).toBe(version)
+    expect(decoded.getHeight()).toBe(height)
+    expect(decoded.getPrevBlockHashString()).toBe(prevBlockHashBuffer.toString('hex'))
+    expect(decoded.getNonce()).toBe(nonce)
+    expect(decoded.getTransactions().length).toBe(size)
+
+    for (let i = 0; i < size; i++) {
+        const decodedTx = decoded.getTransactions()[i]
+
+        const fromWallet = createWallet(mnemonic, i)
+        expect(decodedTx.getFromAddressString()).toBe(fromWallet.getAddress())
+        expect(decodedTx.getFee()).toBe(fee)
+        expect(decodedTx.getDests().length).toBe(1)
+
+        const decodedDest = decodedTx.getDests()[0]
+        const destWallet = createWallet(mnemonic, 100 + i)
+        expect(decodedDest.getAddressString()).toBe(destWallet.getAddress())
+        expect(decodedDest.getAmount()).toBe(BigInt(123456))
+        expect(decodedDest.getMessageUtf8()).toBe(Buffer.from('hello', 'utf8').toString('utf8'))
+    }
+
+    expect(decoded.getDifficultyTarget().toString('hex')).toBe(block.getDifficultyTarget().toString('hex'))
+})
