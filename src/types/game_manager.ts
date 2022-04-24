@@ -1,7 +1,7 @@
 import { Block } from "./blockchain/block";
 import { Blockchain } from "./blockchain/blockchain";
 import { Transaction } from "./blockchain/transaction";
-import { BlockFactory } from "./BlockFactory";
+import { BlockFactory } from "./block_factory";
 import { Miner } from "./miner/miner";
 
 export class GameManager {

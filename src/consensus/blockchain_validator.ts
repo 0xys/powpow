@@ -1,8 +1,7 @@
 import { Block } from "../types/blockchain/block";
 import { Blockchain } from "../types/blockchain/blockchain";
-import { BlockValidator } from "./BlockValidator";
-import { ConsensusEngine } from "./ConsensusEngine"
-import { TransactionVerifier } from "./TransactionVerifier";
+import { ConsensusEngine } from "./consensus_engine"
+import { TransactionVerifier } from "./transaction_verifiier";
 
 class Journal {
     address: string
