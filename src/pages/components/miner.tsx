@@ -1,8 +1,8 @@
 import type { NextPage } from 'next'
 import { useState } from 'react'
-import { Destination, Transaction } from '../types/blockchain/transaction'
-import { Miner } from '../types/miner/miner'
-import { Wallet } from '../types/miner/wallet'
+import { Destination, Transaction } from '../../types/blockchain/transaction'
+import { Miner } from '../../types/miner/miner'
+import { Wallet } from '../../types/miner/wallet'
 
 type OnSendHandler = (txBlob: string) => void
 
