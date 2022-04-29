@@ -10,7 +10,7 @@ export class Miner {
     private wallets: Wallet[] = []
     private mempool: Mempool;
 
-    constructor(mnemonic: string, private name: string, private machines: Machine[], private batteries: Battery[]){
+    constructor(private mnemonic: string, private name: string, private machines: Machine[], private batteries: Battery[]){
         const seed = bip39.mnemonicToSeedSync(mnemonic)
         const root = hdkey.fromMasterSeed(seed)
         for (let i = 0; i < defaultNumOfWallets; i++) {
@@ -20,6 +20,10 @@ export class Miner {
         }
 
         this.mempool = Mempool.Empty()
+    }
+
+    getMnemonic = (): string => {
+        return this.mnemonic
     }
 
     getName = (): string => {

@@ -81,6 +81,9 @@ export class Transaction {
 
         return Buffer.concat(bufs)
     }
+    encodeToHex = (): string => {
+        return this.encode().toString('hex')
+    }
 
     encodedLen = (): number => {
         let destsSize = 0

@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { useEffect, useState } from 'react'
 import { io, Socket } from 'socket.io-client'
 import { DefaultEventsMap } from 'socket.io/dist/typed-events'
+import { MinerComponent } from '../components/miner'
 import styles from '../styles/Home.module.css'
 import { Destination, Transaction } from '../types/blockchain/transaction'
 import { Mempool } from '../types/miner/mempool'
@@ -86,13 +87,9 @@ const Home: NextPage = () => {
     }
   }
 
-  const onSendHandler = (e: any) => {
-    const from = randomBytes(33)
-    const to = randomBytes(33)
-    const amount = BigInt(123)
-    const message = Buffer.from(e.target.value, 'utf8')
-    const tx = new Transaction(from, BigInt(10), [new Destination(to, amount, message)])
-    socket.emit('send', tx.encode().toString('hex'))
+  const onSendHandler = (e: string) => {
+    console.log(e)
+    socket.emit('send', e)
   }
 
   const onAddHandler = (e: any) => {
@@ -137,15 +134,12 @@ const Home: NextPage = () => {
 
   return (
     <div>
+      <MinerComponent onSend={onSendHandler}/>
       <input
         placeholder="Type transaction message"
         value={input}
         onChange={onChangeHandler}
       />
-      <button onClick={onSendHandler} value={input}>
-        send
-      </button>
-      <br />
       <br />
       Mempool
       <br />
