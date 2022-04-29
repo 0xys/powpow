@@ -90,12 +90,6 @@ const Home: NextPage = () => {
     }
   }, [blockFactory])
 
-
-  const onChangeHandler = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInput(e.target.value)
-    // socket.emit('input-change', e.target.value)
-  }
-
   const onMempoolSelectionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     if (!mempool) {
       return
@@ -160,11 +154,6 @@ const Home: NextPage = () => {
   return (
     <div>
       <WalletComponent onSend={onSendHandler}/>
-      <input
-        placeholder="Type transaction message"
-        value={input}
-        onChange={onChangeHandler}
-      />
       <br />
       Mempool
       <br />
