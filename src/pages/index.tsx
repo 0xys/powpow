@@ -27,6 +27,7 @@ const Home: NextPage = () => {
   const [receivedTx, setReceivedTx] = useState<Transaction>()
 
   const [block, setBlock] = useState<Block>()
+  const [nonce, setNonce] = useState<bigint>(BigInt(0))
 
   useEffect(() => {
     const socketInitializer = async () => {
@@ -68,6 +69,23 @@ const Home: NextPage = () => {
       }
     }
   }, [receivedTx])
+
+  useEffect(() => {
+    if(block) {
+      const mine = async () => {
+        let current = nonce
+        while (true) {
+          current += BigInt(1)
+          await new Promise(resolve => setTimeout(resolve, 100))
+          if (current > 100) {
+            break
+          }
+          setNonce(current)
+        }
+      }
+      mine()
+    }
+  }, [block])
 
 
   const onChangeHandler = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -175,6 +193,7 @@ const Home: NextPage = () => {
         ))}
       </ul>
       <br />
+      <p>{nonce.toString()}</p>
       <button onClick={onPropagateBlockHandler}>
         propagate
       </button>
