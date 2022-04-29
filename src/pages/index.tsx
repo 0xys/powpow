@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { useEffect, useState } from 'react'
 import { io, Socket } from 'socket.io-client'
 import { DefaultEventsMap } from 'socket.io/dist/typed-events'
-import { MinerComponent } from './components/miner'
+import { WalletComponent } from './components/wallet'
 import styles from '../styles/Home.module.css'
 import { Destination, Transaction } from '../types/blockchain/transaction'
 import { Mempool } from '../types/miner/mempool'
@@ -134,7 +134,7 @@ const Home: NextPage = () => {
 
   return (
     <div>
-      <MinerComponent onSend={onSendHandler}/>
+      <WalletComponent onSend={onSendHandler}/>
       <input
         placeholder="Type transaction message"
         value={input}

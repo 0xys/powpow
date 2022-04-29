@@ -6,7 +6,7 @@ import { Wallet } from '../../types/miner/wallet'
 
 type OnSendHandler = (txBlob: string) => void
 
-export const MinerComponent = (prop: {onSend: OnSendHandler}) => {
+export const WalletComponent = (prop: {onSend: OnSendHandler}) => {
     const {onSend} = prop
     const [mnemonic, setMnemonic] = useState<string>('')
     const [miner, setMiner] = useState<Miner>()
