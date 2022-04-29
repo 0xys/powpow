@@ -55,6 +55,37 @@ export class Block {
         return this.hash().toString('hex')
     }
 
+    setNonce = (nonce: bigint) => {
+        this.nonce = nonce
+    }
+    hashWith = (nonce: bigint): Buffer => {
+        let bufs: Buffer[] = []
+
+        const versionBuf = toBufferBE(this.version, 4)
+        bufs.push(versionBuf)
+
+        const heightBuf = toBufferBE(this.height, 4)
+        bufs.push(heightBuf)
+
+        bufs.push(this.prevBlockHash)
+
+        bufs.push(this.difficultyTarget)
+
+        const lenBuf = conv(this.transactions.length)
+        bufs.push(lenBuf)
+
+        for (const tx of this.transactions) {
+            bufs.push(tx.encode())
+        }
+
+        const nonceBuf = toBufferBE(nonce, 4)
+        bufs.push(nonceBuf)
+
+        const body = Buffer.concat(bufs)
+        const hashed = createHash('sha256').update(body).digest()
+        return hashed
+    }
+
     encode = (): Buffer => {
         let bufs: Buffer[] = []
 

@@ -9,12 +9,11 @@ import { WalletComponent } from './components/wallet'
 import styles from '../styles/Home.module.css'
 import { Destination, Transaction } from '../types/blockchain/transaction'
 import { Mempool } from '../types/miner/mempool'
+import { Block } from '../types/blockchain/block'
 
 export let socket: Socket<DefaultEventsMap, DefaultEventsMap>
 
-type Block = {
-  transactions: Transaction[]
-}
+const version = BigInt(0)
 
 const Home: NextPage = () => {
   const [input, setInput] = useState('')
@@ -26,7 +25,8 @@ const Home: NextPage = () => {
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction>()
   const [receivedTx, setReceivedTx] = useState<Transaction>()
 
-  const [block, setBlock] = useState<Block>()
+  const [blockFactory, setBlockFactory] = useState<Block>()
+  const [minedBlock, setMinedBlock] = useState<Block>()
   const [nonce, setNonce] = useState<bigint>(BigInt(0))
 
   useEffect(() => {
@@ -71,21 +71,24 @@ const Home: NextPage = () => {
   }, [receivedTx])
 
   useEffect(() => {
-    if(block) {
+    if(blockFactory) {
       const mine = async () => {
         let current = nonce
         while (true) {
           current += BigInt(1)
           await new Promise(resolve => setTimeout(resolve, 100))
-          if (current > 100) {
+          setNonce(current)
+          const hash = blockFactory.hashWith(current)[0]
+          if (hash < 10) {
+            const mined = new Block(version, blockFactory.getHeight(), blockFactory.getPrevBlockHash(), blockFactory.getTransactions(), current)
+            setMinedBlock(mined)
             break
           }
-          setNonce(current)
         }
       }
       mine()
     }
-  }, [block])
+  }, [blockFactory])
 
 
   const onChangeHandler = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -114,17 +117,20 @@ const Home: NextPage = () => {
     if (!selectedTransaction) {
       return
     }
-    if (block) {
-      const afterTxs = [...block.transactions, selectedTransaction]
-      const afterBlock: Block = {
-        transactions: afterTxs
-      }
-      setBlock(afterBlock)
+    const nextHeight = blocks.length
+    let prevBlockHash = Buffer.allocUnsafe(32).fill("00")
+    if (nextHeight > 0) {
+      prevBlockHash = blocks[nextHeight-1].hash()
+    }
+
+    if (blockFactory) {
+      const afterTxs = [...blockFactory.getTransactions(), selectedTransaction]
+      const afterBlock = new Block(version, BigInt(nextHeight), prevBlockHash, afterTxs, blockFactory.getNonce())
+      setBlockFactory(afterBlock)
     }else{
-      const afterBlock: Block = {
-        transactions: [selectedTransaction]
-      }
-      setBlock(afterBlock)
+      const afterTxs = [selectedTransaction]
+      const afterBlock = new Block(version, BigInt(nextHeight), prevBlockHash, afterTxs, BigInt(0))
+      setBlockFactory(afterBlock)
     }
     if (mempool) {
       mempool.removeTransactionByHashString(selectedTransaction.hashString())
@@ -143,11 +149,12 @@ const Home: NextPage = () => {
     setSelectedTransaction(undefined)
   }
   const onPropagateBlockHandler = (e: any) => {
-    if (!block) {
+    if (!minedBlock) {
       return
     }
-    setBlock(undefined)
-    setBlocks([...blocks, block])
+    setBlockFactory(undefined)
+    setMinedBlock(undefined)
+    setBlocks([...blocks, minedBlock])
   }
 
   return (
@@ -188,12 +195,13 @@ const Home: NextPage = () => {
       Block
       <br />
       <ul>
-        {block?.transactions.map((tx, i) =>(
+        {blockFactory?.getTransactions().map((tx, i) =>(
           <li key={i}>{tx.hashString()}</li>
         ))}
       </ul>
       <br />
       <p>{nonce.toString()}</p>
+      <p>mined: {minedBlock?.hashString()}</p>
       <button onClick={onPropagateBlockHandler}>
         propagate
       </button>
@@ -202,14 +210,18 @@ const Home: NextPage = () => {
       <br />
       <ul>
         {blocks.map((block, i) => (
-          <li key={i}>
-            {i}
-            <ul>
-              {block.transactions.map((tx,j) => (
-                <li key={j}>{tx.hashString()}</li>
-              ))}
-            </ul>
-          </li>
+          <div key={i}>
+            {i}: {block.hashString()}
+            <br />
+            <li>
+              <ul>
+                {block.getTransactions().map((tx,j) => (
+                  <li key={j}>{tx.hashString()}</li>
+                ))}
+              </ul>
+            </li>
+          </div>
+          
         ))}
       </ul>
     </div>
