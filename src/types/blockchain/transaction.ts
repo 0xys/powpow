@@ -134,8 +134,13 @@ export class Transaction {
 }
 
 export class Destination {
-    constructor(private address: Buffer, private amount: bigint, private message: Buffer) {
-
+    private message: Buffer
+    constructor(private address: Buffer, private amount: bigint, message?: Buffer) {
+        if(message) {
+            this.message = message
+        }else{
+            this.message = Buffer.from('')
+        }
     }
 
     getAddress = (): Buffer => {

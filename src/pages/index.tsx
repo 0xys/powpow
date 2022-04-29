@@ -1,3 +1,4 @@
+import { randomBytes } from 'crypto'
 import type { NextPage } from 'next'
 import Head from 'next/head'
 import Image from 'next/image'
@@ -5,12 +6,10 @@ import { useEffect, useState } from 'react'
 import { io, Socket } from 'socket.io-client'
 import { DefaultEventsMap } from 'socket.io/dist/typed-events'
 import styles from '../styles/Home.module.css'
+import { Destination, Transaction } from '../types/blockchain/transaction'
+import { Mempool } from '../types/miner/mempool'
 
 export let socket: Socket<DefaultEventsMap, DefaultEventsMap>
-
-type Transaction = {
-  message: string
-}
 
 type Block = {
   transactions: Transaction[]
@@ -22,7 +21,7 @@ const Home: NextPage = () => {
   const [blocks, setBlocks] = useState<Block[]>([])
   const [receivedBlock, setReceivedBlock] = useState<Block>()
 
-  const [mempool, setMempool] = useState<Transaction[]>([])
+  const [mempool, setMempool] = useState<Mempool>()
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction>()
   const [receivedTx, setReceivedTx] = useState<Transaction>()
 
@@ -42,7 +41,9 @@ const Home: NextPage = () => {
       })
 
       socket.on('new-transaction', msg => {
-        setReceivedTx({message: msg})
+        const transaction = Transaction.decode(Buffer.from(msg, 'hex'))
+        console.log('received: ', transaction.hashString())
+        setReceivedTx(transaction)
       })
     }
     socketInitializer()
@@ -56,34 +57,43 @@ const Home: NextPage = () => {
 
   useEffect(() => {
     if (receivedTx){
-      setMempool([...mempool, receivedTx])
+      if (mempool){
+        mempool.put(receivedTx)
+        const after = new Mempool(mempool.getTransactionsArray())
+        setMempool(after)
+      }else{
+        const mempool = new Mempool([receivedTx])
+        setMempool(mempool)
+      }
     }
   }, [receivedTx])
 
 
   const onChangeHandler = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInput(e.target.value)
+    // setInput(e.target.value)
     // socket.emit('input-change', e.target.value)
   }
 
   const onMempoolSelectionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const index = mempool.findIndex(x => x.message == e.target.value)
-    if (index < 0) {
+    if (!mempool) {
       return
     }
-    const selected = mempool[index]
-    const after: Transaction[] = []
-    for (let i=0;i<mempool.length;i++){
-      if (i != index) {
-        after.push(mempool[i])
-      }
-    }
-    setSelectedTransaction(selected)
+    console.log(e.target.value)
+    const selectedHash: string = e.target.value
+    const tx = mempool.removeTransactionByHashString(selectedHash)
+    setSelectedTransaction(tx)
+
+    const after = new Mempool(mempool.getTransactionsArray())
     setMempool(after)
   }
 
   const onClickHandler = (e: any) => {
-    socket.emit('send', e.target.value)
+    const from = randomBytes(33)
+    const to = randomBytes(33)
+    const amount = BigInt(123)
+    const message = Buffer.from(e.target.value, 'utf8')
+    const tx = new Transaction(from, BigInt(10), [new Destination(to, amount, message)])
+    socket.emit('send', tx.encode().toString('hex'))
   }
 
   const onAddHandler = (e: any) => {
@@ -108,7 +118,14 @@ const Home: NextPage = () => {
   const onBackHandler = (e: any) => {
     if (selectedTransaction) {
       setSelectedTransaction(undefined)
-      setMempool([...mempool, selectedTransaction])
+      if (mempool) {
+        mempool?.put(selectedTransaction)
+        const after = new Mempool(mempool.getTransactionsArray())
+        setMempool(after)
+      }else{
+        const after = new Mempool([selectedTransaction])
+        setMempool(after)
+      }
     }
   }
   const onDiscardHandler = (e: any) => {
@@ -138,13 +155,19 @@ const Home: NextPage = () => {
       <br />
       Mempool
       <br />
-      <select onChange={onMempoolSelectionChange} multiple={true} size={10}>
-        {mempool.map((tx, i) => (
-          <option key={i}>{tx.message}</option>
+      <select onChange={onMempoolSelectionChange} size={10}>
+        {mempool?.getTransactionsArray().map((tx, i) => (
+          <option key={i}>{tx.hashString()}</option>
         ))}
       </select>
       <br />
-      Selected: {selectedTransaction?.message}
+      Selected: {selectedTransaction?.hashString()}
+      <br />
+      From: {selectedTransaction?.getFromAddressString()}
+      <br />
+      To: {selectedTransaction?.getDests()[0].getAddressString()}
+      <br />
+      Message: {selectedTransaction?.getDests()[0].getMessageUtf8()}
       <br />
       <button onClick={onAddHandler}>
         add
@@ -160,8 +183,8 @@ const Home: NextPage = () => {
       Block
       <br />
       <ul>
-        {block?.transactions.map(tx =>(
-          <li>{tx.message}</li>
+        {block?.transactions.map((tx, i) =>(
+          <li key={i}>{tx.hashString()}</li>
         ))}
       </ul>
       <br />
@@ -173,11 +196,11 @@ const Home: NextPage = () => {
       <br />
       <ul>
         {blocks.map((block, i) => (
-          <li>
+          <li key={i}>
             {i}
             <ul>
-              {block.transactions.map(tx => (
-                <li>{tx.message}</li>
+              {block.transactions.map((tx,j) => (
+                <li key={j}>{tx.hashString()}</li>
               ))}
             </ul>
           </li>

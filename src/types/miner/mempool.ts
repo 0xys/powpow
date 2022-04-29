@@ -13,6 +13,9 @@ export class Mempool {
     getTransactions = (): Map<string, Transaction> => { 
         return this.mapping
     }
+    getTransactionsArray = (): Transaction[] => {
+        return Array.from(this.mapping.values())
+    }
     tryGetTransactionByHash = (hash: Buffer): { found: boolean, tx?: Transaction} => {
         const hashString = hash.toString('hex')
         return this.tryGetTransactionByHashString(hashString)
