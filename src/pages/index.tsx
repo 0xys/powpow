@@ -70,7 +70,7 @@ const Home: NextPage = () => {
 
 
   const onChangeHandler = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // setInput(e.target.value)
+    setInput(e.target.value)
     // socket.emit('input-change', e.target.value)
   }
 
@@ -80,14 +80,13 @@ const Home: NextPage = () => {
     }
     console.log(e.target.value)
     const selectedHash: string = e.target.value
-    const tx = mempool.removeTransactionByHashString(selectedHash)
-    setSelectedTransaction(tx)
-
-    const after = new Mempool(mempool.getTransactionsArray())
-    setMempool(after)
+    const {found, tx} = mempool.tryGetTransactionByHashString(selectedHash)
+    if (found){
+      setSelectedTransaction(tx)
+    }
   }
 
-  const onClickHandler = (e: any) => {
+  const onSendHandler = (e: any) => {
     const from = randomBytes(33)
     const to = randomBytes(33)
     const amount = BigInt(123)
@@ -112,26 +111,21 @@ const Home: NextPage = () => {
       }
       setBlock(afterBlock)
     }
-    setSelectedTransaction(undefined)
-
-  }
-  const onBackHandler = (e: any) => {
-    if (selectedTransaction) {
-      setSelectedTransaction(undefined)
-      if (mempool) {
-        mempool?.put(selectedTransaction)
-        const after = new Mempool(mempool.getTransactionsArray())
-        setMempool(after)
-      }else{
-        const after = new Mempool([selectedTransaction])
-        setMempool(after)
-      }
+    if (mempool) {
+      mempool.removeTransactionByHashString(selectedTransaction.hashString())
+      const after = new Mempool(mempool.getTransactionsArray())
+      setMempool(after)
     }
+    setSelectedTransaction(undefined)
   }
   const onDiscardHandler = (e: any) => {
-    if (selectedTransaction) {
-      setSelectedTransaction(undefined)
+    if (!selectedTransaction || !mempool) {
+      return
     }
+    mempool.removeTransactionByHashString(selectedTransaction.hashString())
+    const after = new Mempool(mempool.getTransactionsArray())
+    setMempool(after)
+    setSelectedTransaction(undefined)
   }
   const onPropagateBlockHandler = (e: any) => {
     if (!block) {
@@ -148,7 +142,7 @@ const Home: NextPage = () => {
         value={input}
         onChange={onChangeHandler}
       />
-      <button onClick={onClickHandler} value={input}>
+      <button onClick={onSendHandler} value={input}>
         send
       </button>
       <br />
@@ -171,9 +165,6 @@ const Home: NextPage = () => {
       <br />
       <button onClick={onAddHandler}>
         add
-      </button>
-      <button onClick={onBackHandler}>
-        back
       </button>
       <button onClick={onDiscardHandler}>
         discard
