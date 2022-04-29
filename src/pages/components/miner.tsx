@@ -61,7 +61,7 @@ export const MinerComponent = (prop: {onSend: OnSendHandler}) => {
         const from = selectedWallet.getAddressBuffer()
         const dest = new Destination(Buffer.from(destinationAddress, 'hex'),
             destinationAmount,
-            Buffer.from(destinationMessage, 'hex'))
+            Buffer.from(destinationMessage, 'utf8'))
         const tx = new Transaction(from, BigInt(10), [dest])
         const signature = selectedWallet.signTransaction(tx)
         tx.setSignature(signature)

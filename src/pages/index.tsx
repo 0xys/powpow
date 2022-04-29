@@ -155,6 +155,8 @@ const Home: NextPage = () => {
       <br />
       To: {selectedTransaction?.getDests()[0].getAddressString()}
       <br />
+      Amount: {selectedTransaction?.getDests()[0].getAmount().toString()}
+      <br />
       Message: {selectedTransaction?.getDests()[0].getMessageUtf8()}
       <br />
       <button onClick={onAddHandler}>
