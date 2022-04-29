@@ -111,6 +111,9 @@ export class Block {
 
         return Buffer.concat(bufs)
     }
+    encodeToHex = (): string => {
+        return this.encode().toString('hex')
+    }
 
     static decode = (blob: Buffer): Block => {
         const versionBuf = blob.slice(0, 4)

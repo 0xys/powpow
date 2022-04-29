@@ -22,8 +22,13 @@ const SocketHandler = (req: IncomingMessage, res: any) => {
             })
 
             socket.on('send', msg => {
-                console.log('send', msg)
+                console.log('tx', msg)
                 socket.broadcast.emit('new-transaction', msg)
+            })
+
+            socket.on('propagate', msg => {
+                console.log('block', msg)
+                socket.broadcast.emit('new-block', msg)
             })
         })
     }

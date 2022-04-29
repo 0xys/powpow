@@ -44,18 +44,18 @@ const Home: NextPage = () => {
 
       socket.on('new-transaction', msg => {
         const transaction = Transaction.decode(Buffer.from(msg, 'hex'))
-        console.log('received: ', transaction.hashString())
+        console.log('tx received: ', transaction.hashString())
         setReceivedTx(transaction)
+      })
+
+      socket.on('new-block', msg => {
+        const block = Block.decode(Buffer.from(msg, 'hex'))
+        console.log('block received: ', block.hashString())
+        setReceivedBlock(block)
       })
     }
     socketInitializer()
   }, [])
-
-  useEffect(() => {
-    if(receivedBlock){
-      setBlocks([...blocks, receivedBlock])
-    }
-  }, [receivedBlock])
 
   useEffect(() => {
     if (receivedTx){
@@ -90,6 +90,15 @@ const Home: NextPage = () => {
     }
   }, [blockFactory])
 
+  useEffect(() => {
+    if (receivedBlock) {
+      if (BigInt(blocks.length) == receivedBlock.getHeight()){
+        setBlocks([...blocks, receivedBlock])
+        return
+      }
+    }
+  }, [receivedBlock])
+
   const onMempoolSelectionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     if (!mempool) {
       return
@@ -103,7 +112,7 @@ const Home: NextPage = () => {
   }
 
   const onSendHandler = (e: string) => {
-    console.log(e)
+    console.log('broadcast tx:', e)
     socket.emit('send', e)
   }
 
@@ -149,6 +158,10 @@ const Home: NextPage = () => {
     setBlockFactory(undefined)
     setMinedBlock(undefined)
     setBlocks([...blocks, minedBlock])
+
+    const message = minedBlock.encodeToHex()
+    console.log('propagate block:', message)
+    socket.emit('propagate', message)
   }
 
   return (
@@ -200,7 +213,7 @@ const Home: NextPage = () => {
       <ul>
         {blocks.map((block, i) => (
           <div key={i}>
-            {i}: {block.hashString()}
+            {block.getHeight().toString()}: {block.hashString()}
             <br />
             <li>
               <ul>
