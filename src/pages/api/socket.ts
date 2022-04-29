@@ -23,7 +23,7 @@ const SocketHandler = (req: IncomingMessage, res: any) => {
 
             socket.on('send', msg => {
                 console.log('send', msg)
-                socket.broadcast.emit('new-block', msg)
+                socket.broadcast.emit('new-transaction', msg)
             })
         })
     }
