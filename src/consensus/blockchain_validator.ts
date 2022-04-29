@@ -82,7 +82,7 @@ export class ChainValidationError {
 }
 
 export class BlockchainValidator {
-    private cache: BalanceMapCache = BalanceMapCache.Empty()
+    cache: BalanceMapCache = BalanceMapCache.Empty()
 
     constructor(
         private verifier: TransactionVerifierInterface,
