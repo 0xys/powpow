@@ -21,7 +21,7 @@ class BalanceMapCache {
     private balances: {[address: string]: bigint} = {}
     private journals: Journal[]
 
-    constructor(private upto: number) {
+    constructor(private validatedLength: number) {
         this.balances = {}
         this.journals = []
     }
@@ -30,11 +30,11 @@ class BalanceMapCache {
         return new BalanceMapCache(0)
     }
 
-    getUpTo = (): number => {
-        return this.upto
+    getValidatedLength = (): number => {
+        return this.validatedLength
     }
-    setUpTo = (upto: number) => {
-        this.upto = upto
+    setValidatedLength = (upto: number) => {
+        this.validatedLength = upto
     }
 
     getBalance = (address: string): bigint => {
@@ -99,7 +99,7 @@ export class BlockchainValidator {
 
     tryAppendBlock = (blockchain: Blockchain, block: Block): ChainValidationError|undefined => {
         //  if balance map not in sync with given blockchain
-        if (blockchain.blocks.length > this.cache.getUpTo()) {
+        if (blockchain.blocks.length > this.cache.getValidatedLength()) {
             const error = this.validateMissingChain(blockchain)
             if (error) {
                 return error
@@ -121,11 +121,11 @@ export class BlockchainValidator {
         }
 
         blockchain.blocks.push(block)
-        this.cache.setUpTo(blockchain.blocks.length)
+        this.cache.setValidatedLength(blockchain.blocks.length)
     }
 
     validateMissingChain = (blockchain: Blockchain): ChainValidationError|undefined => {
-        for (let height = this.cache.getUpTo(); height < blockchain.blocks.length; height++) {
+        for (let height = this.cache.getValidatedLength(); height < blockchain.blocks.length; height++) {
             const block = blockchain.blocks[height]
 
             if (height > 0) {
@@ -151,7 +151,7 @@ export class BlockchainValidator {
                 const hashString = block.getTransactions()[error.index].hashString()
                 return new ChainValidationError(height, error.index, hashString, error.message)
             }
-            this.cache.setUpTo(height + 1)
+            this.cache.setValidatedLength(height + 1)
         }
     }
 

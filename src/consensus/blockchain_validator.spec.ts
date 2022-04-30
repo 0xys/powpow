@@ -68,7 +68,7 @@ test('single block validation', () => {
 
     const error = validator.validateEntireChainFromZero(blockchain)
     expect(error).toBe(undefined)
-    expect(validator.cache.getUpTo()).toBe(1)
+    expect(validator.cache.getValidatedLength()).toBe(1)
 
     expect(Number(validator.cache.getBalance(dealer0.getAddress()))).toBe(9600)
     expect(Number(validator.cache.getBalance(wallet0.getAddress()))).toBe(100)
@@ -94,7 +94,7 @@ test('single block validation 2', () => {
 
     const error = validator.validateEntireChainFromZero(blockchain)
     expect(error).toBe(undefined)
-    expect(validator.cache.getUpTo()).toBe(1)
+    expect(validator.cache.getValidatedLength()).toBe(1)
 
     expect(Number(validator.cache.getBalance(dealer0.getAddress()))).toBe(9810)
 
@@ -130,7 +130,7 @@ test('two blocks validation', () => {
 
     const error = validator.validateEntireChainFromZero(blockchain)
     expect(error).toBe(undefined)
-    expect(validator.cache.getUpTo()).toBe(2)
+    expect(validator.cache.getValidatedLength()).toBe(2)
 
     expect(Number(validator.cache.getBalance(dealer0.getAddress()))).toBe(9600)
     expect(Number(validator.cache.getBalance(dealer1.getAddress()))).toBe(6000)
@@ -167,7 +167,7 @@ test('two blocks validation 2', () => {
 
     const error = validator.validateEntireChainFromZero(blockchain)
     expect(error).toBe(undefined)
-    expect(validator.cache.getUpTo()).toBe(2)
+    expect(validator.cache.getValidatedLength()).toBe(2)
 
     expect(Number(validator.cache.getBalance(dealer0.getAddress()))).toBe(9810)
     expect(Number(validator.cache.getBalance(dealer1.getAddress()))).toBe(9020)
@@ -198,7 +198,7 @@ test('two blocks out of order', () => {
 
     const error = validator.validateEntireChainFromZero(blockchain)
     expect(error?.message).toBe('block height out of order')
-    expect(validator.cache.getUpTo()).toBe(1)   // only first block is validated
+    expect(validator.cache.getValidatedLength()).toBe(1)   // only first block is validated
 })
 
 test('wrong previous hash', () => {
@@ -220,7 +220,7 @@ test('wrong previous hash', () => {
 
     const error = validator.validateEntireChainFromZero(blockchain)
     expect(error?.message).toBe('previous block hash not correct')
-    expect(validator.cache.getUpTo()).toBe(1)   // only first block is validated
+    expect(validator.cache.getValidatedLength()).toBe(1)   // only first block is validated
 })
 
 test('test appending correct block', () => {
@@ -242,7 +242,7 @@ test('test appending correct block', () => {
 
     const error0 = validator.validateEntireChainFromZero(blockchain)
     expect(error0).toBe(undefined)
-    expect(validator.cache.getUpTo()).toBe(1)
+    expect(validator.cache.getValidatedLength()).toBe(1)
 
     //  second block
     const coinbase = Transaction.Coinbase(dealer1.getPrivateKey(), BigInt(10000))
@@ -253,7 +253,7 @@ test('test appending correct block', () => {
 
     const error1 = validator.tryAppendBlock(blockchain, block)
     expect(error1).toBe(undefined)
-    expect(validator.cache.getUpTo()).toBe(2)
+    expect(validator.cache.getValidatedLength()).toBe(2)
 
     expect(blockchain.blocks.length).toBe(2)    // check if appended
     expect(blockchain.blocks[1].hashString()).toBe(block.hashString())  // and it's correct
@@ -297,7 +297,7 @@ test('test appending wrong block', () => {
     expect(error1?.height).toBe(1)      // height 1
     expect(error1?.transactionIndex).toBe(3)    // overspent tx index is 3
     expect(blockchain.blocks.length).toBe(1)    // check if not appended
-    expect(validator.cache.getUpTo()).toBe(1)
+    expect(validator.cache.getValidatedLength()).toBe(1)    // second block is not validated
 
     //  balance is of at height 0 
     expect(Number(validator.cache.getBalance(dealer0.getAddress()))).toBe(9810)
