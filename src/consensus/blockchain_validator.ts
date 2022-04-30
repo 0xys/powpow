@@ -41,10 +41,16 @@ class BalanceMapCache {
         return this.balances[address]
     }
     addBalance = (address: string, amount: bigint) => {
+        if (!this.balances[address]) {
+            this.balances[address] = BigInt(0)
+        }
         this.balances[address] += amount
         this.journals.push(new Journal(address, amount, true))
     }
     subtractBalance = (address: string, amount: bigint) => {
+        if (!this.balances[address]) {
+            this.balances[address] = BigInt(0)
+        }
         this.balances[address] -= amount
         this.journals.push(new Journal(address, amount, false))
     }
@@ -148,6 +154,7 @@ export class BlockchainValidator {
     }
 
     private validateBlockTransactions = (block: Block): {index: number, message: string}|undefined => {
+        let miner: string = ''
         for (let i = 0; i < block.getTransactions().length; i++) {
             const tx = block.getTransactions()[i]
 
@@ -159,7 +166,6 @@ export class BlockchainValidator {
                 return { index: i, message: 'consensus rule violated' }
             }
 
-            let miner: string = ''
             if (tx.isCoinbase()) {
                 const dest = tx.getDests()[0]
                 miner = dest.getAddressString()

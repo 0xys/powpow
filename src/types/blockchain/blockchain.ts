@@ -22,6 +22,6 @@ export class Blockchain {
             return Buffer.from([0xee, 0xff, 0xff, 0xff])
         }
 
-        return this.blocks[this.blocks.length - 1].getDifficultyTarget()
+        return this.blocks[this.blocks.length - 1].getDifficultyTargetBuffer()
     }
 }

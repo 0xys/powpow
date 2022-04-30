@@ -52,7 +52,7 @@ test('block with single transaction', () => {
     expect(decodedDest.getAmount()).toBe(destAmount)
     expect(decodedDest.getMessageUtf8()).toBe(destMessage.toString('utf8'))
 
-    expect(decoded.getDifficultyTarget().toString('hex')).toBe(block.getDifficultyTarget().toString('hex'))
+    expect(decoded.getDifficultyTargetBuffer().toString('hex')).toBe(block.getDifficultyTargetBuffer().toString('hex'))
 })
 
 test('block with multiple transactions', () => {
@@ -105,5 +105,5 @@ test('block with multiple transactions', () => {
         expect(decodedDest.getMessageUtf8()).toBe(Buffer.from('hello', 'utf8').toString('utf8'))
     }
 
-    expect(decoded.getDifficultyTarget().toString('hex')).toBe(block.getDifficultyTarget().toString('hex'))
+    expect(decoded.getDifficultyTargetBuffer().toString('hex')).toBe(block.getDifficultyTargetBuffer().toString('hex'))
 })

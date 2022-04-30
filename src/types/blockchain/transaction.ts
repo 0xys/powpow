@@ -10,7 +10,6 @@ export class Transaction {
         private fee: bigint,
         private dests: Destination[],
         private signature: Buffer = Buffer.allocUnsafe(65)) {
-
     }
 
     //  33 byte
