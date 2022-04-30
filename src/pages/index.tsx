@@ -61,6 +61,7 @@ const Home: NextPage = () => {
     socketInitializer()
   }, [])
 
+  // mempool receives transaction
   useEffect(() => {
     if (receivedTx){
       if (mempool){
@@ -127,6 +128,7 @@ const Home: NextPage = () => {
     }
   }, [blockFactory])
 
+  //  when receiving new block 
   useEffect(() => {
     if (receivedBlock) {
       if (BigInt(blocks.length) == receivedBlock.getHeight()){
@@ -138,7 +140,7 @@ const Home: NextPage = () => {
 
   const onMnemonicChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setMnemonic(e.target.value)
-}
+  }
   const onImport = (e: any) => {
     const miner = new Miner(mnemonic, 'self', [], [])
     setMiner(miner)
