@@ -2,18 +2,19 @@ import { toBigIntBE } from "bigint-buffer";
 import { Block } from "../types/blockchain/block";
 
 export interface ConsensusEngineInterface {
-    verifyDifficulty(block: Block): boolean
+    isSolved(block: Block): boolean
 }
 
+const MAX_DIFFICULTY = toBigIntBE(Buffer.from([0xff, 0xff, 0xff, 0xff]))
+
 export class ConsensusEngine implements ConsensusEngineInterface {
-    verifyDifficulty = (block: Block): boolean => {
-        const difficultyBuf = block.getDifficultyTarget()
-        const difficulty = toBigIntBE(difficultyBuf)
+    isSolved = (block: Block): boolean => {
+        const difficulty = block.getDifficultyTarget()
 
         const scoreBuf = block.hash().slice(0, 4)
         const score = toBigIntBE(scoreBuf)
 
-        // less difficulty makes block production hard
-        return difficulty >= score
+        // higher difficulty makes block production hard
+        return score >= difficulty
     }
 }

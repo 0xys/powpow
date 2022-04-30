@@ -143,6 +143,10 @@ export class BlockchainValidator {
         return this.validateMissingChain(blockchain)
     }
 
+    getConsensusEngine = (): ConsensusEngineInterface => {
+        return this.consensusEngine
+    }
+
     private validateBlockTransactions = (block: Block): {index: number, message: string}|undefined => {
         for (let i = 0; i < block.getTransactions().length; i++) {
             const tx = block.getTransactions()[i]
@@ -188,7 +192,7 @@ export class BlockchainValidator {
     }
 
     private validateBlockConsensus = (block: Block): string|undefined => {
-        if (!this.consensusEngine.verifyDifficulty(block)) {
+        if (!this.consensusEngine.isSolved(block)) {
             return `invalid difficulty`;
         }
 

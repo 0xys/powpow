@@ -11,7 +11,7 @@ const consensus = new ConsensusEngine()
 const defaultValidator = new BlockchainValidator(verifier, consensus)
 const blockchainContext = new BlockchainContext(defaultValidator)
 
-const BlockchainContextTheme = React.createContext<BlockchainContext>(blockchainContext)
+export const BlockchainContextTheme = React.createContext<BlockchainContext>(blockchainContext)
 
 function MyApp({ Component, pageProps }: AppProps) {
   return (

@@ -2,7 +2,7 @@ import { randomBytes } from 'crypto'
 import type { NextPage } from 'next'
 import Head from 'next/head'
 import Image from 'next/image'
-import { useEffect, useState } from 'react'
+import { useContext, useEffect, useState } from 'react'
 import { io, Socket } from 'socket.io-client'
 import { DefaultEventsMap } from 'socket.io/dist/typed-events'
 import { WalletComponent } from './components/wallet'
@@ -12,6 +12,7 @@ import { Mempool } from '../types/miner/mempool'
 import { Block } from '../types/blockchain/block'
 import { Miner } from '../types/miner/miner'
 import { Wallet } from '../types/miner/wallet'
+import { BlockchainContextTheme } from './_app'
 
 export let socket: Socket<DefaultEventsMap, DefaultEventsMap>
 
@@ -33,6 +34,8 @@ const Home: NextPage = () => {
   const [blockFactory, setBlockFactory] = useState<Block>()
   const [minedBlock, setMinedBlock] = useState<Block>()
   const [nonce, setNonce] = useState<bigint>(BigInt(0))
+
+  const context = useContext(BlockchainContextTheme)
 
   useEffect(() => {
     const socketInitializer = async () => {
@@ -103,6 +106,7 @@ const Home: NextPage = () => {
     }
   }, [selectedWallet])
 
+  // try mining block 
   useEffect(() => {
     if(blockFactory) {
       const mine = async () => {
@@ -111,8 +115,8 @@ const Home: NextPage = () => {
           current += BigInt(1)
           await new Promise(resolve => setTimeout(resolve, 100))
           setNonce(current)
-          const hash = blockFactory.hashWith(current)[0]
-          if (hash < 10) {
+          const candidate = blockFactory.mutateNonce(current)
+          if (context.getConsensusEngine().isSolved(candidate)) {
             const mined = new Block(version, blockFactory.getHeight(), blockFactory.getPrevBlockHash(), blockFactory.getTransactions(), current)
             setMinedBlock(mined)
             break

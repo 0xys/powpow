@@ -3,15 +3,21 @@ import { Transaction } from './transaction'
 import { createHash } from 'crypto';
 
 export class Block {
+    private difficultyTarget: bigint
     constructor(
         private version: bigint,
         private height: bigint,
         private prevBlockHash: Buffer,
         private transactions: Transaction[],
         private nonce: bigint,
-        private difficultyTarget: Buffer = Buffer.allocUnsafe(4))
+        difficultyTarget?: bigint)
     {
-
+        if (difficultyTarget) {
+            this.difficultyTarget = difficultyTarget
+        }else{
+            //  initial difficulty
+            this.difficultyTarget = toBigIntBE(Buffer.from([0xee, 0x00, 0x00, 0x00]))
+        }
     }
 
     // 4 byte
@@ -33,8 +39,11 @@ export class Block {
     }
 
     //  4 byte
-    getDifficultyTarget = (): Buffer => {
+    getDifficultyTarget = (): bigint => {
         return this.difficultyTarget
+    }
+    getDifficultyTargetBuffer = (): Buffer => {
+        return toBufferBE(this.difficultyTarget, 4)
     }
 
     getTransactions = (): Transaction[] => {
@@ -58,6 +67,9 @@ export class Block {
     setNonce = (nonce: bigint) => {
         this.nonce = nonce
     }
+    mutateNonce = (nonce: bigint): Block => {
+        return new Block(this.version, this.height, this.prevBlockHash, this.transactions, nonce, this.difficultyTarget)
+    }
     hashWith = (nonce: bigint): Buffer => {
         let bufs: Buffer[] = []
 
@@ -69,7 +81,7 @@ export class Block {
 
         bufs.push(this.prevBlockHash)
 
-        bufs.push(this.difficultyTarget)
+        bufs.push(this.getDifficultyTargetBuffer())
 
         const lenBuf = conv(this.transactions.length)
         bufs.push(lenBuf)
@@ -97,7 +109,7 @@ export class Block {
 
         bufs.push(this.prevBlockHash)
 
-        bufs.push(this.difficultyTarget)
+        bufs.push(this.getDifficultyTargetBuffer())
 
         const lenBuf = conv(this.transactions.length)
         bufs.push(lenBuf)
@@ -124,7 +136,8 @@ export class Block {
 
         const prevBlockHash = blob.slice(8, 40)
 
-        const difficultyTarget = blob.slice(40, 44)
+        const difficultyTargetBuf = blob.slice(40, 44)
+        const difficultyTarget = toBigIntBE(difficultyTargetBuf)
 
         const lenBuf = blob.slice(44, 48)
         const len = Number(toBigIntBE(lenBuf))

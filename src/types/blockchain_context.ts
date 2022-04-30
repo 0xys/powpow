@@ -1,4 +1,5 @@
 import { BlockchainValidator } from "../consensus/blockchain_validator";
+import { ConsensusEngine, ConsensusEngineInterface } from "../consensus/consensus_engine";
 import { Block } from "./blockchain/block";
 import { Blockchain } from "./blockchain/blockchain";
 import { Transaction } from "./blockchain/transaction";
@@ -31,5 +32,9 @@ export class BlockchainContext {
 
     getBlockchain = (): Blockchain => {
         return this.blockchain
+    }
+
+    getConsensusEngine = (): ConsensusEngineInterface => {
+        return this.validator.getConsensusEngine()
     }
 }
