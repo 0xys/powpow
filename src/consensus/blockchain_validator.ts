@@ -127,6 +127,16 @@ export class BlockchainValidator {
         for (let height = this.cache.getUpTo(); height < blockchain.blocks.length; height++) {
             const block = blockchain.blocks[height]
 
+            if (height > 0) {
+                const prevBlock = blockchain.blocks[height - 1]
+                if (!block.getPrevBlockHash().equals(prevBlock.hash())) {
+                    return new ChainValidationError(height, -1, '', 'previous block hash not correct') 
+                }
+                if(prevBlock.getHeight() + BigInt(1) != block.getHeight()) {
+                    return new ChainValidationError(height, -1, '', 'block height out of order') 
+                }
+            }
+
             const blockError = this.validateBlockConsensus(block)
             if (blockError) {
                 //  block error doesn't set transaction index

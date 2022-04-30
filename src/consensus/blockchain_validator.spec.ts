@@ -31,10 +31,13 @@ const createWallet = (mnemonic: string, index: number): Wallet => {
     return new Wallet(node.privateKey)
 }
 
-const dealer  = createWallet(mnemonic, 0)
-const wallet0 = createWallet(mnemonic, 1)
-const wallet1 = createWallet(mnemonic, 2)
-const wallet2 = createWallet(mnemonic, 3)
+const dealer0  = createWallet(mnemonic, 100)
+const dealer1  = createWallet(mnemonic, 101)
+const dealer2  = createWallet(mnemonic, 102)
+
+const wallet0 = createWallet(mnemonic, 0)
+const wallet1 = createWallet(mnemonic, 1)
+const wallet2 = createWallet(mnemonic, 2)
 
 const verifier = new MockTxVerifier()
 const engine = new MockEngine()
@@ -54,10 +57,10 @@ test('single block validation', () => {
 
     const blockchain = new Blockchain()
 
-    const coinbase = Transaction.Coinbase(dealer.getPrivateKey(), BigInt(10000))
-    const tx0 = createTx(dealer, wallet0.getAddressBuffer(), BigInt(100))
-    const tx1 = createTx(dealer, wallet1.getAddressBuffer(), BigInt(100))
-    const tx2 = createTx(dealer, wallet2.getAddressBuffer(), BigInt(200))
+    const coinbase = Transaction.Coinbase(dealer0.getPrivateKey(), BigInt(10000))
+    const tx0 = createTx(dealer0, wallet0.getAddressBuffer(), BigInt(100))
+    const tx1 = createTx(dealer0, wallet1.getAddressBuffer(), BigInt(100))
+    const tx2 = createTx(dealer0, wallet2.getAddressBuffer(), BigInt(200))
 
     const block = createBlock(coinbase, [tx0, tx1, tx2], BigInt(0), Buffer.allocUnsafe(32).fill(0))
 
@@ -66,8 +69,44 @@ test('single block validation', () => {
     const error = validator.validateEntireChainFromZero(blockchain)
     expect(error).toBe(undefined)
 
-    expect(Number(validator.cache.getBalance(dealer.getAddress()))).toBe(9600)
+    expect(Number(validator.cache.getBalance(dealer0.getAddress()))).toBe(9600)
     expect(Number(validator.cache.getBalance(wallet0.getAddress()))).toBe(100)
     expect(Number(validator.cache.getBalance(wallet1.getAddress()))).toBe(100)
     expect(Number(validator.cache.getBalance(wallet2.getAddress()))).toBe(200)
+})
+
+test('two blocks validation', () => {
+    const validator = new BlockchainValidator(verifier, engine)
+
+    const blockchain = new Blockchain()
+
+    let hash0: Buffer
+    {
+        const coinbase = Transaction.Coinbase(dealer0.getPrivateKey(), BigInt(10000))
+        const tx0 = createTx(dealer0, wallet0.getAddressBuffer(), BigInt(100))
+        const tx1 = createTx(dealer0, wallet1.getAddressBuffer(), BigInt(100))
+        const tx2 = createTx(dealer0, wallet2.getAddressBuffer(), BigInt(200))
+        const block = createBlock(coinbase, [tx0, tx1, tx2], BigInt(0), Buffer.allocUnsafe(32).fill(0))
+        blockchain.blocks.push(block)
+        hash0 = block.hash()
+    }
+    
+    {
+        const coinbase = Transaction.Coinbase(dealer1.getPrivateKey(), BigInt(10000))
+        const tx0 = createTx(dealer1, wallet0.getAddressBuffer(), BigInt(1000))
+        const tx1 = createTx(dealer1, wallet1.getAddressBuffer(), BigInt(1000))
+        const tx2 = createTx(dealer1, wallet2.getAddressBuffer(), BigInt(2000))
+        const block = createBlock(coinbase, [tx0, tx1, tx2], BigInt(1), hash0)
+        blockchain.blocks.push(block)
+    }
+
+    const error = validator.validateEntireChainFromZero(blockchain)
+    expect(error).toBe(undefined)
+
+    expect(Number(validator.cache.getBalance(dealer0.getAddress()))).toBe(9600)
+    expect(Number(validator.cache.getBalance(dealer1.getAddress()))).toBe(6000)
+
+    expect(Number(validator.cache.getBalance(wallet0.getAddress()))).toBe(1100)
+    expect(Number(validator.cache.getBalance(wallet1.getAddress()))).toBe(1100)
+    expect(Number(validator.cache.getBalance(wallet2.getAddress()))).toBe(2200)
 })
