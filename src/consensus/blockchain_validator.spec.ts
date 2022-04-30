@@ -75,6 +75,32 @@ test('single block validation', () => {
     expect(Number(validator.cache.getBalance(wallet2.getAddress()))).toBe(200)
 })
 
+test('single block validation 2', () => {
+    const validator = new BlockchainValidator(verifier, engine)
+
+    const blockchain = new Blockchain()
+
+    let hash0: Buffer
+    {
+        const coinbase = Transaction.Coinbase(dealer0.getPrivateKey(), BigInt(10000))
+        const tx0 = createTx(dealer0, wallet0.getAddressBuffer(), BigInt(100))
+        const tx1 = createTx(dealer0, wallet1.getAddressBuffer(), BigInt(100))
+        const tx2 = createTx(wallet1, wallet2.getAddressBuffer(), BigInt(10))
+        const block = createBlock(coinbase, [tx0, tx1, tx2], BigInt(0), Buffer.allocUnsafe(32).fill(0))
+        blockchain.blocks.push(block)
+        hash0 = block.hash()
+    }
+
+    const error = validator.validateEntireChainFromZero(blockchain)
+    expect(error).toBe(undefined)
+
+    expect(Number(validator.cache.getBalance(dealer0.getAddress()))).toBe(9810)
+
+    expect(Number(validator.cache.getBalance(wallet0.getAddress()))).toBe(100)
+    expect(Number(validator.cache.getBalance(wallet1.getAddress()))).toBe(80)
+    expect(Number(validator.cache.getBalance(wallet2.getAddress()))).toBe(10)
+})
+
 test('two blocks validation', () => {
     const validator = new BlockchainValidator(verifier, engine)
 
@@ -109,6 +135,42 @@ test('two blocks validation', () => {
     expect(Number(validator.cache.getBalance(wallet0.getAddress()))).toBe(1100)
     expect(Number(validator.cache.getBalance(wallet1.getAddress()))).toBe(1100)
     expect(Number(validator.cache.getBalance(wallet2.getAddress()))).toBe(2200)
+})
+
+test('two blocks validation 2', () => {
+    const validator = new BlockchainValidator(verifier, engine)
+
+    const blockchain = new Blockchain()
+
+    let hash0: Buffer
+    {
+        const coinbase = Transaction.Coinbase(dealer0.getPrivateKey(), BigInt(10000))
+        const tx0 = createTx(dealer0, wallet0.getAddressBuffer(), BigInt(100))
+        const tx1 = createTx(dealer0, wallet1.getAddressBuffer(), BigInt(100))
+        const tx2 = createTx(wallet1, wallet2.getAddressBuffer(), BigInt(10))
+        const block = createBlock(coinbase, [tx0, tx1, tx2], BigInt(0), Buffer.allocUnsafe(32).fill(0))
+        blockchain.blocks.push(block)
+        hash0 = block.hash()
+    }
+    
+    {
+        const coinbase = Transaction.Coinbase(dealer1.getPrivateKey(), BigInt(10000))
+        const tx0 = createTx(dealer1, wallet0.getAddressBuffer(), BigInt(1000))
+        const tx1 = createTx(wallet0, wallet1.getAddressBuffer(), BigInt(90))
+        const tx2 = createTx(wallet1, wallet2.getAddressBuffer(), BigInt(160))
+        const block = createBlock(coinbase, [tx0, tx1, tx2], BigInt(1), hash0)
+        blockchain.blocks.push(block)
+    }
+
+    const error = validator.validateEntireChainFromZero(blockchain)
+    expect(error).toBe(undefined)
+
+    expect(Number(validator.cache.getBalance(dealer0.getAddress()))).toBe(9810)
+    expect(Number(validator.cache.getBalance(dealer1.getAddress()))).toBe(9020)
+
+    expect(Number(validator.cache.getBalance(wallet0.getAddress()))).toBe(1000)
+    expect(Number(validator.cache.getBalance(wallet1.getAddress()))).toBe(0)
+    expect(Number(validator.cache.getBalance(wallet2.getAddress()))).toBe(170)
 })
 
 test('two blocks out of order', () => {
