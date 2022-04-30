@@ -114,8 +114,7 @@ export class BlockchainValidator {
             return new ChainValidationError(blockchain.blocks.length, error.index, hashString, error.message)
         }
 
-        blockchain.blocks.push(block)
-        this.cache.setUpTo(blockchain.blocks.length)
+        this.cache.setUpTo(blockchain.blocks.length + 1)
     }
 
     validateMissingChain = (blockchain: Blockchain): ChainValidationError|undefined => {
