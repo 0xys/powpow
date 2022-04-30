@@ -6,6 +6,9 @@ export class Wallet {
 
     }
 
+    getPrivateKey = (): Buffer => {
+        return this.privateKey
+    }
     getAddressBuffer = (): Buffer => {
         return Buffer.from(secp256k1.publicKeyCreate(this.privateKey, true))
     }

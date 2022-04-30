@@ -6,38 +6,13 @@ import { Wallet } from '../../types/miner/wallet'
 
 type OnSendHandler = (txBlob: string) => void
 
-export const WalletComponent = (prop: {onSend: OnSendHandler}) => {
-    const {onSend} = prop
-    const [mnemonic, setMnemonic] = useState<string>('')
-    const [miner, setMiner] = useState<Miner>()
-    const [selectedWallet, setSelectedWallet] = useState<Wallet>()
+export const WalletComponent = (prop: {onSend: OnSendHandler, wallet: Wallet|undefined}) => {
+    const {onSend, wallet} = prop
+
     const [destinationAddress, setDestinationAddress] = useState<string>('')
     const [destinationAmountString, setDestinationAmountString] = useState<string>('')
     const [destinationAmount, setDestinationAmount] = useState<bigint>(BigInt(0))
     const [destinationMessage, setDestinationMessage] = useState<string>('')
-
-    const onMnemonicChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setMnemonic(e.target.value)
-    }
-    const onImport = (e: any) => {
-        const miner = new Miner(mnemonic, 'self', [], [])
-        setMiner(miner)
-    }
-    const onMnemonicCreateButtonClicked = (e: any) => {
-        const miner = Miner.GenerateRandom('self')
-        setMnemonic(miner.getMnemonic())
-        setMiner(miner)
-    }
-    const onWalletSelected = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        if (!miner) {
-            return
-        }
-        const selected = miner.getWallets().find(x => x.getAddress() == e.target.value)
-        if (!selected) {
-            return
-        }
-        setSelectedWallet(selected)
-    }
 
     const onDesinationAddressChanged = (e: any) => {
         setDestinationAddress(e.target.value)
@@ -55,38 +30,24 @@ export const WalletComponent = (prop: {onSend: OnSendHandler}) => {
         setDestinationMessage(e.target.value)
     }
     const onSendButtonClicked = (e: any) => {
-        if (!selectedWallet || !destinationAddress) {
+        if (!wallet || !destinationAddress) {
             return
         }
-        const from = selectedWallet.getAddressBuffer()
+        const from = wallet.getAddressBuffer()
         const dest = new Destination(Buffer.from(destinationAddress, 'hex'),
             destinationAmount,
             Buffer.from(destinationMessage, 'utf8'))
         const tx = new Transaction(from, BigInt(10), [dest])
-        const signature = selectedWallet.signTransaction(tx)
+        const signature = wallet.signTransaction(tx)
         tx.setSignature(signature)
         onSend(tx.encodeToHex())
     }
 
     return <div>
-        <input placeholder="Type mnemonic to import"
-        value={mnemonic}
-        onChange={onMnemonicChange} />
-        <button onClick={onImport}>
-            import
-        </button>
-        <button onClick={onMnemonicCreateButtonClicked}>
-            generate
-        </button>
-        <br />
-        <select size={10} onChange={onWalletSelected}>
-            {miner?.getWallets().map((w, i) => (
-                <option key={i}>{w.getAddress()}</option>
-            ))}
-        </select>
+        
         <br />
         <p>Send Transaction</p>
-        Wallet: {selectedWallet?.getAddress()}
+        Wallet: {wallet?.getAddress()}
         <br />
         <input placeholder="Type destination address"
             value={destinationAddress}
@@ -101,7 +62,7 @@ export const WalletComponent = (prop: {onSend: OnSendHandler}) => {
             onChange={onDestinationMessageChanged} />
         <br />
         <div>
-            From: {selectedWallet?.getAddress()}
+            From: {wallet?.getAddress()}
             <br />
             To: {destinationAddress}
             <br />

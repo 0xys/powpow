@@ -10,13 +10,18 @@ import styles from '../styles/Home.module.css'
 import { Destination, Transaction } from '../types/blockchain/transaction'
 import { Mempool } from '../types/miner/mempool'
 import { Block } from '../types/blockchain/block'
+import { Miner } from '../types/miner/miner'
+import { Wallet } from '../types/miner/wallet'
 
 export let socket: Socket<DefaultEventsMap, DefaultEventsMap>
 
 const version = BigInt(0)
+const blockReward = BigInt(10000)
 
 const Home: NextPage = () => {
-  const [input, setInput] = useState('')
+  const [mnemonic, setMnemonic] = useState<string>('')
+  const [miner, setMiner] = useState<Miner>()
+  const [selectedWallet, setSelectedWallet] = useState<Wallet>()
 
   const [blocks, setBlocks] = useState<Block[]>([])
   const [receivedBlock, setReceivedBlock] = useState<Block>()
@@ -36,10 +41,6 @@ const Home: NextPage = () => {
   
       socket.on('connect', () => {
         console.log('connected')
-      })
-
-      socket.on('update-input', msg => {
-        setInput(msg)
       })
 
       socket.on('new-transaction', msg => {
@@ -70,6 +71,38 @@ const Home: NextPage = () => {
     }
   }, [receivedTx])
 
+  //  init with coinbase
+  useEffect(() => {
+    if(!selectedWallet) {
+      return
+    }
+    
+    const nextHeight = blocks.length
+    let prevBlockHash = Buffer.allocUnsafe(32).fill("00")
+    if (nextHeight > 0) {
+      prevBlockHash = blocks[nextHeight-1].hash()
+    }
+    const coinbase = Transaction.Coinbase(selectedWallet.getPrivateKey(), blockReward)
+    let afterTxs: Transaction[] = []
+    if(blockFactory) {
+      if (blockFactory.getTransactions().length > 0) {
+        if (blockFactory.getTransactions()[0].isCoinbase()) {
+          afterTxs = [coinbase, ...blockFactory.getTransactions().slice(1)]
+        }else{
+          afterTxs = [coinbase, ...blockFactory.getTransactions()]
+        }
+      }else{
+        afterTxs = [coinbase]
+      }
+      const afterBlock = new Block(version, BigInt(nextHeight), prevBlockHash, afterTxs, BigInt(0))
+      setBlockFactory(afterBlock)
+    }else{
+      const afterTxs = [coinbase]
+      const afterBlock = new Block(version, BigInt(nextHeight), prevBlockHash, afterTxs, BigInt(0))
+      setBlockFactory(afterBlock)
+    }
+  }, [selectedWallet])
+
   useEffect(() => {
     if(blockFactory) {
       const mine = async () => {
@@ -98,6 +131,29 @@ const Home: NextPage = () => {
       }
     }
   }, [receivedBlock])
+
+  const onMnemonicChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setMnemonic(e.target.value)
+}
+  const onImport = (e: any) => {
+    const miner = new Miner(mnemonic, 'self', [], [])
+    setMiner(miner)
+  }
+  const onMnemonicCreateButtonClicked = (e: any) => {
+    const miner = Miner.GenerateRandom('self')
+    setMnemonic(miner.getMnemonic())
+    setMiner(miner)
+  }
+  const onWalletSelected = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    if (!miner) {
+      return
+    }
+    const selected = miner.getWallets().find(x => x.getAddress() == e.target.value)
+    if (!selected) {
+      return
+    }
+    setSelectedWallet(selected)
+  }
 
   const onMempoolSelectionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     if (!mempool) {
@@ -166,7 +222,23 @@ const Home: NextPage = () => {
 
   return (
     <div>
-      <WalletComponent onSend={onSendHandler}/>
+      <input placeholder="Type mnemonic to import"
+        value={mnemonic}
+        onChange={onMnemonicChange} />
+        <button onClick={onImport}>
+            import
+        </button>
+        <button onClick={onMnemonicCreateButtonClicked}>
+            generate
+        </button>
+        <br />
+        <select size={10} onChange={onWalletSelected}>
+            {miner?.getWallets().map((w, i) => (
+                <option key={i}>{w.getAddress()}</option>
+            ))}
+        </select>
+      <br />
+      <WalletComponent onSend={onSendHandler} wallet={selectedWallet}/>
       <br />
       Mempool
       <br />
