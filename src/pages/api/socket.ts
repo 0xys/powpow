@@ -1,9 +1,17 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import { IncomingMessage, ServerResponse } from 'http'
 import { Server } from 'socket.io'
+import { BlockchainValidator } from '../../consensus/blockchain_validator'
+import { ConsensusEngine } from '../../consensus/consensus_engine'
+import { TransactionVerifier } from '../../consensus/transaction_verifiier'
 import { Block } from '../../types/blockchain/block'
+import { Blockchain } from '../../types/blockchain/blockchain'
 
-let blocks: Block[] = []
+const verifier = new TransactionVerifier()
+const engine = new ConsensusEngine()
+const validator = new BlockchainValidator(verifier, engine)
+
+const blockchain = new Blockchain()
 
 const SocketHandler = (req: IncomingMessage, res: any) => {
     if (res.socket.server.io) {
@@ -20,8 +28,11 @@ const SocketHandler = (req: IncomingMessage, res: any) => {
 
             socket.on('propagate', msg => {
                 const block = Block.decode(Buffer.from(msg, 'hex'))
-                blocks.push(block)
-                console.log(blocks.length, 'block', msg)
+                if(!validate(block)){
+                    return
+                }
+                console.log('block', msg)
+                blockchain.blocks.push(block)
                 socket.broadcast.emit('new-block', msg)
             })
         })
@@ -29,5 +40,13 @@ const SocketHandler = (req: IncomingMessage, res: any) => {
     res.end()
 }
 
+const validate = (block: Block): boolean => {
+    const error = validator.tryAppendBlock(blockchain, block)
+    if(!error) {
+        return true    
+    }
+    console.log('malformed block ', error.height, 'received:', error.message)
+    return false
+}
 
 export default SocketHandler
