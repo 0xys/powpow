@@ -216,3 +216,79 @@ test('wrong previous hash', () => {
     const error = validator.validateEntireChainFromZero(blockchain)
     expect(error?.message).toBe('previous block hash not correct')
 })
+
+test('test appending correct block', () => {
+    const validator = new BlockchainValidator(verifier, engine)
+
+    const blockchain = new Blockchain()
+
+    let hash0: Buffer
+    {
+        const coinbase = Transaction.Coinbase(dealer0.getPrivateKey(), BigInt(10000))
+        const tx0 = createTx(dealer0, wallet0.getAddressBuffer(), BigInt(100))
+        const tx1 = createTx(dealer0, wallet1.getAddressBuffer(), BigInt(100))
+        const tx2 = createTx(wallet1, wallet2.getAddressBuffer(), BigInt(10))
+        const block = createBlock(coinbase, [tx0, tx1, tx2], BigInt(0), Buffer.allocUnsafe(32).fill(0))
+        blockchain.blocks.push(block)
+        hash0 = block.hash()
+    }
+
+    const error0 = validator.validateEntireChainFromZero(blockchain)
+    expect(error0).toBe(undefined)
+
+    const coinbase = Transaction.Coinbase(dealer1.getPrivateKey(), BigInt(10000))
+    const tx0 = createTx(dealer1, wallet0.getAddressBuffer(), BigInt(1000))
+    const tx1 = createTx(wallet0, wallet1.getAddressBuffer(), BigInt(90))
+    const tx2 = createTx(wallet1, wallet2.getAddressBuffer(), BigInt(160))
+    const block = createBlock(coinbase, [tx0, tx1, tx2], BigInt(1), hash0)
+
+    const error1 = validator.tryAppendBlock(blockchain, block)
+    expect(error1).toBe(undefined)
+
+    expect(blockchain.blocks.length).toBe(2)    // check if appended
+    expect(blockchain.blocks[1].hashString()).toBe(block.hashString())  // and it's correct
+
+    expect(Number(validator.cache.getBalance(dealer0.getAddress()))).toBe(9810)
+    expect(Number(validator.cache.getBalance(dealer1.getAddress()))).toBe(9020)
+
+    expect(Number(validator.cache.getBalance(wallet0.getAddress()))).toBe(1000)
+    expect(Number(validator.cache.getBalance(wallet1.getAddress()))).toBe(0)
+    expect(Number(validator.cache.getBalance(wallet2.getAddress()))).toBe(170)
+})
+
+test('test appending wrong block', () => {
+    const validator = new BlockchainValidator(verifier, engine)
+
+    const blockchain = new Blockchain()
+
+    let hash0: Buffer
+    {
+        const coinbase = Transaction.Coinbase(dealer0.getPrivateKey(), BigInt(10000))
+        const tx0 = createTx(dealer0, wallet0.getAddressBuffer(), BigInt(100))
+        const tx1 = createTx(dealer0, wallet1.getAddressBuffer(), BigInt(100))
+        const tx2 = createTx(wallet1, wallet2.getAddressBuffer(), BigInt(10))
+        const block = createBlock(coinbase, [tx0, tx1, tx2], BigInt(0), Buffer.allocUnsafe(32).fill(0))
+        blockchain.blocks.push(block)
+        hash0 = block.hash()
+    }
+
+    const error0 = validator.validateEntireChainFromZero(blockchain)
+    expect(error0).toBe(undefined)
+
+    const coinbase = Transaction.Coinbase(dealer1.getPrivateKey(), BigInt(10000))
+    const tx0 = createTx(dealer1, wallet0.getAddressBuffer(), BigInt(1000))
+    const tx1 = createTx(wallet0, wallet1.getAddressBuffer(), BigInt(90))
+    const tx2 = createTx(wallet1, wallet2.getAddressBuffer(), BigInt(161))   // overspend
+    const block = createBlock(coinbase, [tx0, tx1, tx2], BigInt(1), hash0)
+
+    const error1 = validator.tryAppendBlock(blockchain, block)
+    expect(error1?.height).toBe(1)      // height 1
+    expect(error1?.transactionIndex).toBe(3)    // overspent tx index is 3
+    expect(blockchain.blocks.length).toBe(1)    // check if not appended
+
+    //  balance is of at height 0 
+    expect(Number(validator.cache.getBalance(dealer0.getAddress()))).toBe(9810)
+    expect(Number(validator.cache.getBalance(wallet0.getAddress()))).toBe(100)
+    expect(Number(validator.cache.getBalance(wallet1.getAddress()))).toBe(80)
+    expect(Number(validator.cache.getBalance(wallet2.getAddress()))).toBe(10)
+})
