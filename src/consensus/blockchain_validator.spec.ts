@@ -110,3 +110,47 @@ test('two blocks validation', () => {
     expect(Number(validator.cache.getBalance(wallet1.getAddress()))).toBe(1100)
     expect(Number(validator.cache.getBalance(wallet2.getAddress()))).toBe(2200)
 })
+
+test('two blocks out of order', () => {
+    const validator = new BlockchainValidator(verifier, engine)
+
+    const blockchain = new Blockchain()
+
+    let hash0: Buffer
+    {
+        const coinbase = Transaction.Coinbase(dealer0.getPrivateKey(), BigInt(10000))
+        const block = createBlock(coinbase, [], BigInt(0), Buffer.allocUnsafe(32).fill(0))
+        blockchain.blocks.push(block)
+        hash0 = block.hash()
+    }
+    
+    {
+        const coinbase = Transaction.Coinbase(dealer1.getPrivateKey(), BigInt(10000))
+        const block = createBlock(coinbase, [], BigInt(2), hash0)   // out of order
+        blockchain.blocks.push(block)
+    }
+
+    const error = validator.validateEntireChainFromZero(blockchain)
+    expect(error?.message).toBe('block height out of order')
+})
+
+test('wrong previous hash', () => {
+    const validator = new BlockchainValidator(verifier, engine)
+
+    const blockchain = new Blockchain()
+
+    {
+        const coinbase = Transaction.Coinbase(dealer0.getPrivateKey(), BigInt(10000))
+        const block = createBlock(coinbase, [], BigInt(0), Buffer.allocUnsafe(32).fill(0))
+        blockchain.blocks.push(block)
+    }
+    
+    {
+        const coinbase = Transaction.Coinbase(dealer1.getPrivateKey(), BigInt(10000))
+        const block = createBlock(coinbase, [], BigInt(1), Buffer.allocUnsafe(32).fill(0))   // wrong prev hash
+        blockchain.blocks.push(block)
+    }
+
+    const error = validator.validateEntireChainFromZero(blockchain)
+    expect(error?.message).toBe('previous block hash not correct')
+})
