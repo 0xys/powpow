@@ -305,3 +305,53 @@ test('test appending wrong block', () => {
     expect(Number(validator.cache.getBalance(wallet1.getAddress()))).toBe(80)
     expect(Number(validator.cache.getBalance(wallet2.getAddress()))).toBe(10)
 })
+
+test('test validate longer blockchain than current one', () => {
+    const validator = new BlockchainValidator(verifier, engine)
+
+    const blockchain = new Blockchain()
+
+    // first block
+    let hash0: Buffer
+    {
+        const coinbase = Transaction.Coinbase(dealer0.getPrivateKey(), BigInt(10000))
+        const tx0 = createTx(dealer0, wallet0.getAddressBuffer(), BigInt(100))
+        const tx1 = createTx(dealer0, wallet1.getAddressBuffer(), BigInt(100))
+        const tx2 = createTx(wallet1, wallet2.getAddressBuffer(), BigInt(10))
+        const block = createBlock(coinbase, [tx0, tx1, tx2], BigInt(0), Buffer.allocUnsafe(32).fill(0))
+        blockchain.blocks.push(block)
+        hash0 = block.hash()
+    }
+
+    //  validate with one block
+    const error0 = validator.validateEntireChainFromZero(blockchain)
+    expect(error0).toBe(undefined)
+    expect(validator.cache.getValidatedLength()).toBe(1)
+
+    //  second block
+    let hash1: Buffer
+    {
+        const coinbase = Transaction.Coinbase(dealer1.getPrivateKey(), BigInt(10000))
+        const tx0 = createTx(dealer1, wallet0.getAddressBuffer(), BigInt(1000))
+        const tx1 = createTx(wallet0, wallet1.getAddressBuffer(), BigInt(90))
+        const tx2 = createTx(wallet1, wallet2.getAddressBuffer(), BigInt(160))
+        const block = createBlock(coinbase, [tx0, tx1, tx2], BigInt(1), hash0)
+        blockchain.blocks.push(block)
+        hash1 = block.hash()
+    }
+    
+    // validate with new blockchain that contains second block
+    const error1 = validator.validateMissingChain(blockchain)
+    expect(error1).toBe(undefined)
+
+    expect(blockchain.blocks.length).toBe(2)    // check if appended
+    expect(blockchain.blocks[1].hashString()).toBe(hash1.toString('hex'))  // and it's correct
+    expect(validator.cache.getValidatedLength()).toBe(2)
+
+    expect(Number(validator.cache.getBalance(dealer0.getAddress()))).toBe(9810)
+    expect(Number(validator.cache.getBalance(dealer1.getAddress()))).toBe(9020)
+
+    expect(Number(validator.cache.getBalance(wallet0.getAddress()))).toBe(1000)
+    expect(Number(validator.cache.getBalance(wallet1.getAddress()))).toBe(0)
+    expect(Number(validator.cache.getBalance(wallet2.getAddress()))).toBe(170)
+})
