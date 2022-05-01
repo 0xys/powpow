@@ -213,6 +213,10 @@ export class BlockchainValidator {
             return `invalid difficulty`;
         }
 
+        if (!this.consensusEngine.isSizeOk(block)) {
+            return `exceed size limit`
+        }
+
         let coinbaseCount = 0
         for (let i = 0; i < block.getTransactions().length; i++) {
             const tx = block.getTransactions()[i]

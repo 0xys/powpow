@@ -3,9 +3,11 @@ import { Block } from "../types/blockchain/block";
 
 export interface ConsensusEngineInterface {
     isSolved(block: Block): boolean
+    isSizeOk(block: Block): boolean
 }
 
 const MAX_DIFFICULTY = toBigIntBE(Buffer.from([0xff, 0xff, 0xff, 0xff]))
+const MAX_SIZE = 2048
 
 export class ConsensusEngine implements ConsensusEngineInterface {
     isSolved = (block: Block): boolean => {
@@ -16,5 +18,10 @@ export class ConsensusEngine implements ConsensusEngineInterface {
 
         // higher difficulty makes block production hard
         return score >= difficulty
+    }
+
+    isSizeOk = (block: Block): boolean => {
+        const encoded = block.encode()
+        return encoded.length <= MAX_SIZE
     }
 }
