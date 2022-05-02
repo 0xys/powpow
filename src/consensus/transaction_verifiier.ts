@@ -37,6 +37,6 @@ export class TransactionVerifier implements TransactionVerifierInterface {
     }
 
     verifyConsensus = (transaction: Transaction): boolean => {
-        return false
+        return true
     }
 }
