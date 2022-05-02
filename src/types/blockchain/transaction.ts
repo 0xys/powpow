@@ -30,8 +30,14 @@ export class Transaction {
     }
 
     // 65 byte
-    getSignature = (): Buffer => {
+    // with recovery suffix
+    getRcSignature = (): Buffer => {
         return this.signature
+    }
+
+    // 64 byte
+    getSignature = (): Buffer => {
+        return this.signature.slice(0, 64)
     }
 
     setSignature = (signature: Buffer) => {
