@@ -232,7 +232,7 @@ export class BlockchainValidator {
 
         //  only one coinbase is allowed
         if (coinbaseCount != 1) {
-            return `only one coinbase transaction is allowed`
+            return `only one coinbase transaction is allowed. got ${coinbaseCount}`
         }
     }
 }

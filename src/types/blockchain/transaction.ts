@@ -131,7 +131,7 @@ export class Transaction {
     }
 
     isCoinbase = (): boolean => {
-        return this.getFromAddress() == godAddress
+        return this.getFromAddress().equals(godAddress)
     }
 }
 
