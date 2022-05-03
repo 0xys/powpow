@@ -1,5 +1,6 @@
 import { randomBytes } from 'crypto'
 import type { NextPage } from 'next'
+import useSWR from 'swr'
 import Head from 'next/head'
 import Image from 'next/image'
 import { useContext, useEffect, useState } from 'react'
@@ -23,6 +24,7 @@ const Home: NextPage = () => {
   const [mnemonic, setMnemonic] = useState<string>('')
   const [miner, setMiner] = useState<Miner>()
   const [selectedWallet, setSelectedWallet] = useState<Wallet>()
+  const [isLoadingAccount, setIsLoadingAccount] = useState<boolean>(true)
 
   const [blocks, setBlocks] = useState<Block[]>([])
   const [receivedBlock, setReceivedBlock] = useState<Block>()
@@ -178,10 +180,6 @@ const Home: NextPage = () => {
     socket.emit('send', e)
   }
 
-  const requestAccount = (address: Buffer) => {
-    
-  }
-
   const onAddHandler = (e: any) => {
     if (!selectedTransaction) {
       return
@@ -248,7 +246,7 @@ const Home: NextPage = () => {
             ))}
         </select>
       <br />
-      <WalletComponent onSend={onSendHandler} wallet={selectedWallet}/>
+      <WalletComponent onSend={onSendHandler} wallet={selectedWallet} />
       <br />
       Mempool
       <br />
