@@ -178,6 +178,10 @@ const Home: NextPage = () => {
     socket.emit('send', e)
   }
 
+  const requestAccount = (address: Buffer) => {
+    
+  }
+
   const onAddHandler = (e: any) => {
     if (!selectedTransaction) {
       return
