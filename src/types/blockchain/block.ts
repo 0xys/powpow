@@ -158,7 +158,7 @@ export class Block {
 
     static Genesis = (version: bigint, minerAddress: Buffer): Block => {
         const transactions: Transaction[] = [
-            Transaction.Coinbase(minerAddress, BigInt(1_000_000))
+            Transaction.Coinbase(BigInt(0), minerAddress, BigInt(1_000_000))
         ] 
         return new Block(version, BigInt(0), Buffer.allocUnsafe(32).fill(0), transactions, BigInt(0))
     }

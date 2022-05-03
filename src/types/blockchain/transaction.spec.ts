@@ -16,13 +16,14 @@ const wallet1 = createWallet(mnemonic, 1)
 
 test('simple transaction', () => {
     const from = wallet0.getAddressBuffer()
+    const seq = BigInt(5555)
     const fee = BigInt(1234)
     const destAddress = wallet1.getAddressBuffer()
     const destAmount = BigInt(123456)
     const destMessage = Buffer.from('hello', 'utf8')
 
     const dests = [new Destination(destAddress, destAmount, destMessage)]
-    const tx = new Transaction(from, fee, dests)
+    const tx = new Transaction(from, seq, fee, dests)
     const signature = wallet0.signTransaction(tx)
     tx.setSignature(signature)
 
@@ -33,6 +34,7 @@ test('simple transaction', () => {
     expect(decoded.hashString()).toBe(tx.hashString())
 
     expect(decoded.getFromAddressString()).toBe(tx.getFromAddressString())
+    expect((decoded.getSequence())).toBe(seq)
 
     expect(decoded.getFee()).toBe(fee)
 
@@ -49,13 +51,14 @@ test('simple transaction', () => {
 
 test('transaction with no message', () => {
     const from = wallet0.getAddressBuffer()
+    const seq = BigInt(5555)
     const fee = BigInt(1234)
     const destAddress = wallet1.getAddressBuffer()
     const destAmount = BigInt(123456)
     const destMessage = Buffer.from('')
 
     const dests = [new Destination(destAddress, destAmount, destMessage)]
-    const tx = new Transaction(from, fee, dests)
+    const tx = new Transaction(from, seq, fee, dests)
     const signature = wallet0.signTransaction(tx)
     tx.setSignature(signature)
 
@@ -66,6 +69,7 @@ test('transaction with no message', () => {
     expect(decoded.hashString()).toBe(tx.hashString())
 
     expect(decoded.getFromAddressString()).toBe(tx.getFromAddressString())
+    expect((decoded.getSequence())).toBe(seq)
 
     expect(decoded.getFee()).toBe(fee)
 
@@ -82,6 +86,7 @@ test('transaction with no message', () => {
 
 test('transaction to multiple dests', () => {
     const from = wallet0.getAddressBuffer()
+    const seq = BigInt(5555)
     const fee = BigInt(1234)
 
     let dests: Destination[] = []
@@ -94,7 +99,7 @@ test('transaction to multiple dests', () => {
         dests.push(new Destination(destAddress, destAmount, destMessage))
     }
     
-    const tx = new Transaction(from, fee, dests)
+    const tx = new Transaction(from, seq, fee, dests)
     const signature = wallet0.signTransaction(tx)
     tx.setSignature(signature)
 
@@ -105,6 +110,7 @@ test('transaction to multiple dests', () => {
     expect(decoded.hashString()).toBe(tx.hashString())
 
     expect(decoded.getFromAddressString()).toBe(tx.getFromAddressString())
+    expect((decoded.getSequence())).toBe(seq)
 
     expect(decoded.getFee()).toBe(fee)
 
@@ -123,6 +129,7 @@ test('transaction to multiple dests', () => {
 
 test('transaction to multiple dests with no message for some', () => {
     const from = wallet0.getAddressBuffer()
+    const seq = BigInt(5555)
     const fee = BigInt(1234)
 
     let dests: Destination[] = []
@@ -139,7 +146,7 @@ test('transaction to multiple dests with no message for some', () => {
         }
     }
     
-    const tx = new Transaction(from, fee, dests)
+    const tx = new Transaction(from, seq, fee, dests)
     const signature = wallet0.signTransaction(tx)
     tx.setSignature(signature)
 
@@ -150,6 +157,7 @@ test('transaction to multiple dests with no message for some', () => {
     expect(decoded.hashString()).toBe(tx.hashString())
 
     expect(decoded.getFromAddressString()).toBe(tx.getFromAddressString())
+    expect((decoded.getSequence())).toBe(seq)
 
     expect(decoded.getFee()).toBe(fee)
 

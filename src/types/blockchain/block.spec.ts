@@ -21,12 +21,13 @@ test('block with single transaction', () => {
     const prevBlockHashBuffer = Buffer.from('00000000000000000008a4832077c24e1573fa226f6884fe69a106c7be6d00ad', 'hex')
     const nonce = BigInt(1111)
 
+    const seq = BigInt(5555)
     const fee = BigInt(100)
     const destAddress = wallet1.getAddressBuffer()
     const destAmount = BigInt(123456)
     const destMessage = Buffer.from('hello', 'utf8')
     const dests = [new Destination(destAddress, destAmount, destMessage)]
-    const tx = new Transaction(wallet0.getAddressBuffer(), fee, dests)
+    const tx = new Transaction(wallet0.getAddressBuffer(), seq, fee, dests)
 
     const block = new Block(version, height, prevBlockHashBuffer, [tx], nonce)
 
@@ -66,13 +67,14 @@ test('block with multiple transactions', () => {
     const size = 10
     for (let i = 0; i < size; i++) {
         const fromWallet = createWallet(mnemonic, i)
+        const seq = BigInt(5555)
 
         const destWallet = createWallet(mnemonic, 100 + i)
         const destAddress = destWallet.getAddressBuffer()
         const destAmount = BigInt(123456)
         const destMessage = Buffer.from('hello', 'utf8')
         const dests = [new Destination(destAddress, destAmount, destMessage)]
-        const tx = new Transaction(fromWallet.getAddressBuffer(), fee, dests)
+        const tx = new Transaction(fromWallet.getAddressBuffer(), seq, fee, dests)
         transactions.push(tx)
     }
 

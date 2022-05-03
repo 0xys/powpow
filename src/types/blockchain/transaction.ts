@@ -7,6 +7,7 @@ export const godAddress = Buffer.allocUnsafe(33).fill(0)
 export class Transaction {
     constructor(
         private from: Buffer,
+        private sequence: bigint,
         private fee: bigint,
         private dests: Destination[],
         private signature: Buffer = Buffer.allocUnsafe(65)) {
@@ -18,6 +19,14 @@ export class Transaction {
     }
     getFromAddressString = (): string => {
         return this.from.toString('hex')
+    }
+
+    //  4 byte
+    getSequence = (): bigint => {
+        return this.sequence
+    }
+    getSequenceBuffer = (): Buffer => {
+        return toBufferBE(this.sequence, 4)
     }
 
     // 8 byte
@@ -72,6 +81,8 @@ export class Transaction {
         let bufs: Buffer[] = []
         bufs.push(this.from)
 
+        bufs.push(this.getSequenceBuffer())
+
         const feeBuf = toBufferBE(this.fee, 8)
         bufs.push(feeBuf)
 
@@ -96,44 +107,47 @@ export class Transaction {
             destsSize += dest.encodedLen()
         }
 
-        // from + fee + destLen + [dests] + signature
-        return 33 + 8 + 4 + destsSize + 65
+        // from + seq + fee + destLen + [dests] + signature
+        return 33 + 4 + 8 + 4 + destsSize + 65
     }
 
     static decode = (blob: Buffer): Transaction => {
         const from = blob.slice(0, 33)   // 33 byte
 
-        const feeBuf = blob.slice(33, 41)
+        const seqBuf = blob.slice(33, 37)
+        const seq = toBigIntBE(seqBuf)
+
+        const feeBuf = blob.slice(37, 45)
         const fee = toBigIntBE(feeBuf)
 
-        const lenBuf = blob.slice(41, 45) // 4 byte
+        const lenBuf = blob.slice(45, 49) // 4 byte
         const len = Number(toBigIntBE(lenBuf))
 
         let dests: Destination[] = []
         let offset = 0
         for (let i = 0; i < len; i++) {
-            const dest = Destination.decode(blob.slice(45 + offset))
+            const dest = Destination.decode(blob.slice(49 + offset))
             dests.push(dest)
             offset += dest.encodedLen()
         }
 
-        const signature = blob.slice(45 + offset, 45 + offset + 65) // 65 byte
+        const signature = blob.slice(49 + offset, 49 + offset + 65) // 65 byte
 
-        return new Transaction(from, fee, dests, signature)
+        return new Transaction(from, seq, fee, dests, signature)
     }
 
-    static Coinbase = (beneficiaryPrivateKey: Buffer, blockReward: bigint): Transaction => {
+    static Coinbase = (height: bigint, beneficiaryPrivateKey: Buffer, blockReward: bigint): Transaction => {
         const beneficiaryPubkey = secp256k1.publicKeyCreate(beneficiaryPrivateKey, true)
 
         const dest = new Destination(Buffer.from(beneficiaryPubkey), blockReward, Buffer.from([]))
         
-        const unsigned = new Transaction(godAddress, BigInt(0), [dest])
+        const unsigned = new Transaction(godAddress, height, BigInt(0), [dest])
         
         const sig = secp256k1.ecdsaSign(unsigned.hash(), beneficiaryPrivateKey)
         const recIdBuf = Buffer.from([sig.recid])
         const signature = Buffer.concat([sig.signature, recIdBuf])
 
-        return new Transaction(godAddress, BigInt(0), [dest], signature)
+        return new Transaction(godAddress, height, BigInt(0), [dest], signature)
     }
 
     isCoinbase = (): boolean => {

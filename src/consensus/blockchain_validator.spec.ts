@@ -20,7 +20,10 @@ class MockTxVerifier implements TransactionVerifierInterface {
 class MockEngine implements ConsensusEngineInterface {
     isSolved(block: Block): boolean {
         return true
-    }    
+    }
+    isSizeOk(block: Block): boolean {
+        return true
+    }
 }
 
 const mnemonic = 'thrive cattle beyond fuel mammal section trap forum foam elegant river school'
@@ -43,7 +46,7 @@ const verifier = new MockTxVerifier()
 const engine = new MockEngine()
 
 const createTx = (from: Wallet, to: Buffer, amount: bigint, fee: bigint = BigInt(10)): Transaction => {
-    const tx = new Transaction(from.getAddressBuffer(), fee, [new Destination(to, amount)])
+    const tx = new Transaction(from.getAddressBuffer(), BigInt(0), fee, [new Destination(to, amount)])
     tx.setSignature(Buffer.allocUnsafe(65))
     return tx
 }
@@ -57,7 +60,7 @@ test('single block validation', () => {
 
     const blockchain = new Blockchain()
 
-    const coinbase = Transaction.Coinbase(dealer0.getPrivateKey(), BigInt(10000))
+    const coinbase = Transaction.Coinbase(BigInt(0), dealer0.getPrivateKey(), BigInt(10000))
     const tx0 = createTx(dealer0, wallet0.getAddressBuffer(), BigInt(100))
     const tx1 = createTx(dealer0, wallet1.getAddressBuffer(), BigInt(100))
     const tx2 = createTx(dealer0, wallet2.getAddressBuffer(), BigInt(200))
@@ -83,7 +86,7 @@ test('single block validation 2', () => {
 
     let hash0: Buffer
     {
-        const coinbase = Transaction.Coinbase(dealer0.getPrivateKey(), BigInt(10000))
+        const coinbase = Transaction.Coinbase(BigInt(0), dealer0.getPrivateKey(), BigInt(10000))
         const tx0 = createTx(dealer0, wallet0.getAddressBuffer(), BigInt(100))
         const tx1 = createTx(dealer0, wallet1.getAddressBuffer(), BigInt(100))
         const tx2 = createTx(wallet1, wallet2.getAddressBuffer(), BigInt(10))
@@ -110,7 +113,7 @@ test('two blocks validation', () => {
 
     let hash0: Buffer
     {
-        const coinbase = Transaction.Coinbase(dealer0.getPrivateKey(), BigInt(10000))
+        const coinbase = Transaction.Coinbase(BigInt(0), dealer0.getPrivateKey(), BigInt(10000))
         const tx0 = createTx(dealer0, wallet0.getAddressBuffer(), BigInt(100))
         const tx1 = createTx(dealer0, wallet1.getAddressBuffer(), BigInt(100))
         const tx2 = createTx(dealer0, wallet2.getAddressBuffer(), BigInt(200))
@@ -120,7 +123,7 @@ test('two blocks validation', () => {
     }
     
     {
-        const coinbase = Transaction.Coinbase(dealer1.getPrivateKey(), BigInt(10000))
+        const coinbase = Transaction.Coinbase(BigInt(1), dealer1.getPrivateKey(), BigInt(10000))
         const tx0 = createTx(dealer1, wallet0.getAddressBuffer(), BigInt(1000))
         const tx1 = createTx(dealer1, wallet1.getAddressBuffer(), BigInt(1000))
         const tx2 = createTx(dealer1, wallet2.getAddressBuffer(), BigInt(2000))
@@ -147,7 +150,7 @@ test('two blocks validation 2', () => {
 
     let hash0: Buffer
     {
-        const coinbase = Transaction.Coinbase(dealer0.getPrivateKey(), BigInt(10000))
+        const coinbase = Transaction.Coinbase(BigInt(0), dealer0.getPrivateKey(), BigInt(10000))
         const tx0 = createTx(dealer0, wallet0.getAddressBuffer(), BigInt(100))
         const tx1 = createTx(dealer0, wallet1.getAddressBuffer(), BigInt(100))
         const tx2 = createTx(wallet1, wallet2.getAddressBuffer(), BigInt(10))
@@ -157,7 +160,7 @@ test('two blocks validation 2', () => {
     }
     
     {
-        const coinbase = Transaction.Coinbase(dealer1.getPrivateKey(), BigInt(10000))
+        const coinbase = Transaction.Coinbase(BigInt(1), dealer1.getPrivateKey(), BigInt(10000))
         const tx0 = createTx(dealer1, wallet0.getAddressBuffer(), BigInt(1000))
         const tx1 = createTx(wallet0, wallet1.getAddressBuffer(), BigInt(90))
         const tx2 = createTx(wallet1, wallet2.getAddressBuffer(), BigInt(160))
@@ -184,14 +187,14 @@ test('two blocks out of order', () => {
 
     let hash0: Buffer
     {
-        const coinbase = Transaction.Coinbase(dealer0.getPrivateKey(), BigInt(10000))
+        const coinbase = Transaction.Coinbase(BigInt(0), dealer0.getPrivateKey(), BigInt(10000))
         const block = createBlock(coinbase, [], BigInt(0), Buffer.allocUnsafe(32).fill(0))
         blockchain.blocks.push(block)
         hash0 = block.hash()
     }
     
     {
-        const coinbase = Transaction.Coinbase(dealer1.getPrivateKey(), BigInt(10000))
+        const coinbase = Transaction.Coinbase(BigInt(2), dealer1.getPrivateKey(), BigInt(10000))
         const block = createBlock(coinbase, [], BigInt(2), hash0)   // out of order
         blockchain.blocks.push(block)
     }
@@ -207,13 +210,13 @@ test('wrong previous hash', () => {
     const blockchain = new Blockchain()
 
     {
-        const coinbase = Transaction.Coinbase(dealer0.getPrivateKey(), BigInt(10000))
+        const coinbase = Transaction.Coinbase(BigInt(0), dealer0.getPrivateKey(), BigInt(10000))
         const block = createBlock(coinbase, [], BigInt(0), Buffer.allocUnsafe(32).fill(0))
         blockchain.blocks.push(block)
     }
     
     {
-        const coinbase = Transaction.Coinbase(dealer1.getPrivateKey(), BigInt(10000))
+        const coinbase = Transaction.Coinbase(BigInt(1), dealer1.getPrivateKey(), BigInt(10000))
         const block = createBlock(coinbase, [], BigInt(1), Buffer.allocUnsafe(32).fill(0))   // wrong prev hash
         blockchain.blocks.push(block)
     }
@@ -231,7 +234,7 @@ test('test appending correct block', () => {
     // first block
     let hash0: Buffer
     {
-        const coinbase = Transaction.Coinbase(dealer0.getPrivateKey(), BigInt(10000))
+        const coinbase = Transaction.Coinbase(BigInt(0), dealer0.getPrivateKey(), BigInt(10000))
         const tx0 = createTx(dealer0, wallet0.getAddressBuffer(), BigInt(100))
         const tx1 = createTx(dealer0, wallet1.getAddressBuffer(), BigInt(100))
         const tx2 = createTx(wallet1, wallet2.getAddressBuffer(), BigInt(10))
@@ -245,7 +248,7 @@ test('test appending correct block', () => {
     expect(validator.cache.getValidatedLength()).toBe(1)
 
     //  second block
-    const coinbase = Transaction.Coinbase(dealer1.getPrivateKey(), BigInt(10000))
+    const coinbase = Transaction.Coinbase(BigInt(1), dealer1.getPrivateKey(), BigInt(10000))
     const tx0 = createTx(dealer1, wallet0.getAddressBuffer(), BigInt(1000))
     const tx1 = createTx(wallet0, wallet1.getAddressBuffer(), BigInt(90))
     const tx2 = createTx(wallet1, wallet2.getAddressBuffer(), BigInt(160))
@@ -274,7 +277,7 @@ test('test appending wrong block', () => {
     // first block
     let hash0: Buffer
     {
-        const coinbase = Transaction.Coinbase(dealer0.getPrivateKey(), BigInt(10000))
+        const coinbase = Transaction.Coinbase(BigInt(0), dealer0.getPrivateKey(), BigInt(10000))
         const tx0 = createTx(dealer0, wallet0.getAddressBuffer(), BigInt(100))
         const tx1 = createTx(dealer0, wallet1.getAddressBuffer(), BigInt(100))
         const tx2 = createTx(wallet1, wallet2.getAddressBuffer(), BigInt(10))
@@ -287,7 +290,7 @@ test('test appending wrong block', () => {
     expect(error0).toBe(undefined)
 
     //  second block
-    const coinbase = Transaction.Coinbase(dealer1.getPrivateKey(), BigInt(10000))
+    const coinbase = Transaction.Coinbase(BigInt(1), dealer1.getPrivateKey(), BigInt(10000))
     const tx0 = createTx(dealer1, wallet0.getAddressBuffer(), BigInt(1000))
     const tx1 = createTx(wallet0, wallet1.getAddressBuffer(), BigInt(90))
     const tx2 = createTx(wallet1, wallet2.getAddressBuffer(), BigInt(161))   // overspend
@@ -314,7 +317,7 @@ test('test validate longer blockchain than current one', () => {
     // first block
     let hash0: Buffer
     {
-        const coinbase = Transaction.Coinbase(dealer0.getPrivateKey(), BigInt(10000))
+        const coinbase = Transaction.Coinbase(BigInt(0), dealer0.getPrivateKey(), BigInt(10000))
         const tx0 = createTx(dealer0, wallet0.getAddressBuffer(), BigInt(100))
         const tx1 = createTx(dealer0, wallet1.getAddressBuffer(), BigInt(100))
         const tx2 = createTx(wallet1, wallet2.getAddressBuffer(), BigInt(10))
@@ -331,7 +334,7 @@ test('test validate longer blockchain than current one', () => {
     //  second block
     let hash1: Buffer
     {
-        const coinbase = Transaction.Coinbase(dealer1.getPrivateKey(), BigInt(10000))
+        const coinbase = Transaction.Coinbase(BigInt(1), dealer1.getPrivateKey(), BigInt(10000))
         const tx0 = createTx(dealer1, wallet0.getAddressBuffer(), BigInt(1000))
         const tx1 = createTx(wallet0, wallet1.getAddressBuffer(), BigInt(90))
         const tx2 = createTx(wallet1, wallet2.getAddressBuffer(), BigInt(160))

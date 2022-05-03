@@ -86,7 +86,7 @@ const Home: NextPage = () => {
     if (nextHeight > 0) {
       prevBlockHash = blocks[nextHeight-1].hash()
     }
-    const coinbase = Transaction.Coinbase(selectedWallet.getPrivateKey(), blockReward)
+    const coinbase = Transaction.Coinbase(BigInt(nextHeight), selectedWallet.getPrivateKey(), blockReward)
     let afterTxs: Transaction[] = []
     if(blockFactory) {
       if (blockFactory.getTransactions().length > 0) {
