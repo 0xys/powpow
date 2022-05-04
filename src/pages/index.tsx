@@ -53,7 +53,6 @@ const Home: NextPage = () => {
   const [receivedBlockValidaity, setReceivedBlockValidaity] = useState<boolean>()
 
   const tryAppendBlock: TryAppendBlock = (block: Block): boolean => {
-    console.log(blockchain.blocks.length)
     const error = validator.tryAppendBlock(blockchain, block)
     if(error) {
       console.log(error)
@@ -68,6 +67,15 @@ const Home: NextPage = () => {
     const afeterV = new BlockchainValidator(verifier, consensus)
     afeterV.cache = validator.cache;
     setValidator(afeterV)
+    return true
+  }
+
+  const dryRunBlock: TryAppendBlock = (block: Block): boolean => {
+    const error = validator.dryAppendBlock(blockchain, block)
+    if(error) {
+      console.log(error)
+      return false
+    }
     return true
   }
 
@@ -240,10 +248,24 @@ const Home: NextPage = () => {
     if (blockFactory) {
       const afterTxs = [...blockFactory.getTransactions(), selectedTransaction]
       const afterBlock = new Block(version, BigInt(nextHeight), prevBlockHash, afterTxs, blockFactory.getNonce())
+      
+      const success = dryRunBlock(afterBlock)
+      if (!success) {
+        console.log('error propagating block', success)
+        return
+      }
+      
       setBlockFactory(afterBlock)
     }else{
       const afterTxs = [selectedTransaction]
       const afterBlock = new Block(version, BigInt(nextHeight), prevBlockHash, afterTxs, BigInt(0))
+
+      const success = dryRunBlock(afterBlock)
+      if (!success) {
+        console.log('error propagating block', success)
+        return
+      }
+      
       setBlockFactory(afterBlock)
     }
     if (mempool) {

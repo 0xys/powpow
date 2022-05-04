@@ -111,12 +111,12 @@ export class BlockchainValidator {
 
     dryAppendBlock = (blockchain: Blockchain, block: Block): ChainValidationError|undefined => {
         const snapshot = this.cache.takeSnapshot()
-        const error = this.appendBlock(blockchain, block)
+        const error = this.appendBlock(blockchain, block, false)
         this.cache.revert(snapshot)
         return error
     }
 
-    private appendBlock = (blockchain: Blockchain, block: Block): ChainValidationError|undefined => {
+    private appendBlock = (blockchain: Blockchain, block: Block, validateBlockHeader: boolean = true): ChainValidationError|undefined => {
         //  if balance map not in sync with given blockchain
         if (blockchain.blocks.length > this.cache.getValidatedLength()) {
             const error = this.validateMissingChain(blockchain)
@@ -125,10 +125,12 @@ export class BlockchainValidator {
             }
         }
 
-        const blockError = this.validateBlockConsensus(block)
-        if (blockError) {
-            //  block error doesn't set transaction index
-            return new ChainValidationError(blockchain.blocks.length, -1, '', blockError)
+        if (validateBlockHeader) {
+            const blockError = this.validateBlockConsensus(block)
+            if (blockError) {
+                //  block error doesn't set transaction index
+                return new ChainValidationError(blockchain.blocks.length, -1, '', blockError)
+            }
         }
 
         const error = this.validateBlockTransactions(block)
