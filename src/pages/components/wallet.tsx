@@ -57,7 +57,9 @@ export const WalletComponent =
         
         <br />
         <p>Send Transaction</p>
-        Wallet: {wallet?.wallet.getAddress()} {wallet?.balance.toString()} pow
+        Wallet: {wallet?.wallet.getAddress()}
+        <br />
+        {wallet?.balance.toString()} pow
         <br />
         <input placeholder="Type destination address"
             value={destinationAddress}
@@ -74,14 +76,16 @@ export const WalletComponent =
         <div>
             From: {wallet?.wallet.getAddress()}
             <br />
+            Sequence: {wallet?.seq.toString()}
+            <br />
             To: {destinationAddress}
             <br />
             Amount: {destinationAmountString}
             <br />
             Message: {destinationMessage}
             <br />
-            <button onClick={onSendButtonClicked}>
-                Send
+            <button onClick={onSendButtonClicked} disabled={!wallet}>
+                {!wallet ? "Loading..." : "Send"}
             </button>
         </div>
     </div>

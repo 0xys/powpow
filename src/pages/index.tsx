@@ -6,7 +6,7 @@ import Image from 'next/image'
 import { useContext, useEffect, useState } from 'react'
 import { io, Socket } from 'socket.io-client'
 import { DefaultEventsMap } from 'socket.io/dist/typed-events'
-import { WalletComponent } from './components/wallet'
+import { FetchedWallet, WalletComponent } from './components/wallet'
 import styles from '../styles/Home.module.css'
 import { Destination, Transaction } from '../types/blockchain/transaction'
 import { Mempool } from '../types/miner/mempool'
@@ -14,17 +14,20 @@ import { Block } from '../types/blockchain/block'
 import { Miner } from '../types/miner/miner'
 import { Wallet } from '../types/miner/wallet'
 import { BlockchainContextTheme } from './_app'
+import { Account } from './api/accounts/[address]'
 
 export let socket: Socket<DefaultEventsMap, DefaultEventsMap>
 
 const version = BigInt(0)
 const blockReward = BigInt(10000)
 
+const fetcher = (url: string) => fetch(url).then(res => res.json())
+
 const Home: NextPage = () => {
   const [mnemonic, setMnemonic] = useState<string>('')
   const [miner, setMiner] = useState<Miner>()
   const [selectedWallet, setSelectedWallet] = useState<Wallet>()
-  const [isLoadingAccount, setIsLoadingAccount] = useState<boolean>(true)
+  const [fetchedWallet, setFetchedWallet] = useState<FetchedWallet>()
 
   const [blocks, setBlocks] = useState<Block[]>([])
   const [receivedBlock, setReceivedBlock] = useState<Block>()
@@ -109,6 +112,25 @@ const Home: NextPage = () => {
     }
   }, [selectedWallet])
 
+  const { data: fetchedAccount, error: fetchError } = useSWR<Account>(selectedWallet ? `api/accounts/${selectedWallet.getAddress()}` : null, fetcher)
+  
+  useEffect(() => {
+    if (fetchedAccount && selectedWallet) {
+      setFetchedWallet({
+        wallet: selectedWallet,
+        seq: BigInt(fetchedAccount.sequence),
+        balance: BigInt(fetchedAccount.balance),
+      })
+    }
+  }, [fetchedAccount])
+
+  useEffect(() => {
+    if (fetchError) {
+      setFetchedWallet(undefined)
+      return
+    }
+  }, fetchError)
+  
   // try mining block 
   useEffect(() => {
     if(blockFactory) {
@@ -246,7 +268,7 @@ const Home: NextPage = () => {
             ))}
         </select>
       <br />
-      <WalletComponent onSend={onSendHandler} wallet={selectedWallet} />
+      <WalletComponent onSend={onSendHandler} wallet={fetchedWallet} />
       <br />
       Mempool
       <br />
