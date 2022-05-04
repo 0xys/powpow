@@ -98,6 +98,25 @@ export class BlockchainValidator {
     }
 
     tryAppendBlock = (blockchain: Blockchain, block: Block): ChainValidationError|undefined => {
+        const snapshot = this.cache.takeSnapshot()
+        const error = this.appendBlock(blockchain, block)
+        if (error) {
+            this.cache.revert(snapshot)
+            return error
+        }
+
+        blockchain.blocks.push(block)
+        this.cache.setValidatedLength(blockchain.blocks.length)
+    }
+
+    dryAppendBlock = (blockchain: Blockchain, block: Block): ChainValidationError|undefined => {
+        const snapshot = this.cache.takeSnapshot()
+        const error = this.appendBlock(blockchain, block)
+        this.cache.revert(snapshot)
+        return error
+    }
+
+    private appendBlock = (blockchain: Blockchain, block: Block): ChainValidationError|undefined => {
         //  if balance map not in sync with given blockchain
         if (blockchain.blocks.length > this.cache.getValidatedLength()) {
             const error = this.validateMissingChain(blockchain)
@@ -112,16 +131,11 @@ export class BlockchainValidator {
             return new ChainValidationError(blockchain.blocks.length, -1, '', blockError)
         }
 
-        const snapshot = this.cache.takeSnapshot()
         const error = this.validateBlockTransactions(block)
         if (error) {
-            this.cache.revert(snapshot)
             const hashString = block.getTransactions()[error.index].hashString()
             return new ChainValidationError(blockchain.blocks.length, error.index, hashString, error.message)
         }
-
-        blockchain.blocks.push(block)
-        this.cache.setValidatedLength(blockchain.blocks.length)
     }
 
     validateMissingChain = (blockchain: Blockchain): ChainValidationError|undefined => {

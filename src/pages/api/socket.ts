@@ -11,7 +11,7 @@ const verifier = new TransactionVerifier()
 const engine = new ConsensusEngine()
 const validator = new BlockchainValidator(verifier, engine)
 
-const blockchain = new Blockchain()
+const blockchain = new Blockchain([])
 
 const SocketHandler = (req: IncomingMessage, res: any) => {
     if (res.socket.server.io) {

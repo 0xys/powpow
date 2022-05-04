@@ -13,8 +13,11 @@ import { Mempool } from '../types/miner/mempool'
 import { Block } from '../types/blockchain/block'
 import { Miner } from '../types/miner/miner'
 import { Wallet } from '../types/miner/wallet'
-import { BlockchainContextTheme } from './_app'
 import { Account } from './api/accounts/[address]'
+import { Blockchain } from '../types/blockchain/blockchain'
+import { BlockchainValidator } from '../consensus/blockchain_validator'
+import { TransactionVerifier } from '../consensus/transaction_verifiier'
+import { ConsensusEngine } from '../consensus/consensus_engine'
 
 export let socket: Socket<DefaultEventsMap, DefaultEventsMap>
 
@@ -22,6 +25,11 @@ const version = BigInt(0)
 const blockReward = BigInt(10000)
 
 const fetcher = (url: string) => fetch(url).then(res => res.json())
+export type TryAppendBlock = (block: Block) => boolean
+
+const verifier = new TransactionVerifier()
+const consensus = new ConsensusEngine()
+const defaultValidator = new BlockchainValidator(verifier, consensus)
 
 const Home: NextPage = () => {
   const [mnemonic, setMnemonic] = useState<string>('')
@@ -29,7 +37,7 @@ const Home: NextPage = () => {
   const [selectedWallet, setSelectedWallet] = useState<Wallet>()
   const [fetchedWallet, setFetchedWallet] = useState<FetchedWallet>()
 
-  const [blocks, setBlocks] = useState<Block[]>([])
+  //const [blocks, setBlocks] = useState<Block[]>([])
   const [receivedBlock, setReceivedBlock] = useState<Block>()
 
   const [mempool, setMempool] = useState<Mempool>()
@@ -40,7 +48,28 @@ const Home: NextPage = () => {
   const [minedBlock, setMinedBlock] = useState<Block>()
   const [nonce, setNonce] = useState<bigint>(BigInt(0))
 
-  const context = useContext(BlockchainContextTheme)
+  const [blockchain, setBlockchain] = useState<Blockchain>(new Blockchain([]))
+  const [validator, setValidator] = useState<BlockchainValidator>(defaultValidator)
+  const [receivedBlockValidaity, setReceivedBlockValidaity] = useState<boolean>()
+
+  const tryAppendBlock: TryAppendBlock = (block: Block): boolean => {
+    console.log(blockchain.blocks.length)
+    const error = validator.tryAppendBlock(blockchain, block)
+    if(error) {
+      console.log(error)
+      setReceivedBlockValidaity(false)
+      return false
+    }
+    setReceivedBlockValidaity(true)
+
+    const afterBc = new Blockchain([...blockchain.blocks])
+    setBlockchain(afterBc)
+
+    const afeterV = new BlockchainValidator(verifier, consensus)
+    afeterV.cache = validator.cache;
+    setValidator(afeterV)
+    return true
+  }
 
   useEffect(() => {
     const socketInitializer = async () => {
@@ -86,11 +115,8 @@ const Home: NextPage = () => {
       return
     }
     
-    const nextHeight = blocks.length
-    let prevBlockHash = Buffer.allocUnsafe(32).fill("00")
-    if (nextHeight > 0) {
-      prevBlockHash = blocks[nextHeight-1].hash()
-    }
+    const nextHeight = blockchain.blocks.length
+    let prevBlockHash = blockchain.hash()
     const coinbase = Transaction.Coinbase(BigInt(nextHeight), selectedWallet.getPrivateKey(), blockReward)
     let afterTxs: Transaction[] = []
     if(blockFactory) {
@@ -141,7 +167,7 @@ const Home: NextPage = () => {
           await new Promise(resolve => setTimeout(resolve, 100))
           setNonce(current)
           const candidate = blockFactory.mutateNonce(current)
-          if (context.getConsensusEngine().isSolved(candidate)) {
+          if (validator.getConsensusEngine().isSolved(candidate)) {
             const mined = new Block(version, blockFactory.getHeight(), blockFactory.getPrevBlockHash(), blockFactory.getTransactions(), current)
             setMinedBlock(mined)
             break
@@ -155,8 +181,10 @@ const Home: NextPage = () => {
   //  when receiving new block 
   useEffect(() => {
     if (receivedBlock) {
-      if (BigInt(blocks.length) == receivedBlock.getHeight()){
-        setBlocks([...blocks, receivedBlock])
+      if (BigInt(blockchain.blocks.length) == receivedBlock.getHeight()){
+        console.log('received and append to', blockchain.blocks)
+        const success = tryAppendBlock(receivedBlock)
+        console.log(success)
         return
       }
     }
@@ -206,11 +234,8 @@ const Home: NextPage = () => {
     if (!selectedTransaction) {
       return
     }
-    const nextHeight = blocks.length
-    let prevBlockHash = Buffer.allocUnsafe(32).fill("00")
-    if (nextHeight > 0) {
-      prevBlockHash = blocks[nextHeight-1].hash()
-    }
+    const nextHeight = blockchain.blocks.length
+    let prevBlockHash = blockchain.hash()
 
     if (blockFactory) {
       const afterTxs = [...blockFactory.getTransactions(), selectedTransaction]
@@ -243,8 +268,12 @@ const Home: NextPage = () => {
     }
     setBlockFactory(undefined)
     setMinedBlock(undefined)
-    setBlocks([...blocks, minedBlock])
-
+    console.log('mined and append to', blockchain.blocks)
+    const success = tryAppendBlock(minedBlock)
+    if (!success) {
+      console.log('error propagating block', success)
+      return
+    }
     const message = minedBlock.encodeToHex()
     console.log('propagate block:', message)
     socket.emit('propagate', message)
@@ -313,7 +342,7 @@ const Home: NextPage = () => {
       Blocks
       <br />
       <ul>
-        {blocks.map((block, i) => (
+        {blockchain.blocks.map((block, i) => (
           <div key={i}>
             {block.getHeight().toString()}: {block.hashString()}
             <br />

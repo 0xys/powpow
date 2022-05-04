@@ -3,6 +3,10 @@ import { Block } from "./block";
 export class Blockchain {
     blocks: Block[] = []
 
+    constructor(blocks: Block[]){
+        this.blocks = blocks
+    }
+
     hash = (): Buffer => {
         if (this.blocks.length == 0) {
             return Buffer.allocUnsafe(32).fill(0)
