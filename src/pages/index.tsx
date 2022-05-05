@@ -293,7 +293,7 @@ const Home: NextPage = () => {
     setSelectedTransaction(undefined)
   }
 
-  const removeTxFromFactory = (hash: string) => {
+  const onTransactionRemovedFromFactory = (hash: string) => {
     const nextHeight = blockchain.blocks.length
       let prevBlockHash = blockchain.hash()
       let afterTxs: Transaction[] = []
@@ -379,7 +379,7 @@ const Home: NextPage = () => {
       <BlockFactoryComponent transactions={blockFactory?.getTransactions()??[]}
         txerrors={txerrors}
         height={blockFactory?.getHeight().toString()??''}
-        removeTransaction={removeTxFromFactory} />
+        removeTransaction={onTransactionRemovedFromFactory} />
       <br />
       <p>{nonce.toString()}</p>
       <p>mined: {minedBlock?.hashString()}</p>
