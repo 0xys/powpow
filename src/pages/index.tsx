@@ -27,6 +27,11 @@ const blockReward = BigInt(10000)
 const fetcher = (url: string) => fetch(url).then(res => res.json())
 export type TryAppendBlock = (block: Block) => boolean
 
+type TxError = {
+  index: number,
+  message: string,
+}
+
 const verifier = new TransactionVerifier()
 const consensus = new ConsensusEngine()
 const defaultValidator = new BlockchainValidator(verifier, consensus)
@@ -44,6 +49,7 @@ const Home: NextPage = () => {
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction>()
   const [receivedTx, setReceivedTx] = useState<Transaction>()
 
+  const [txerrors, setTxErrors] = useState<TxError[]>([])
   const [blockFactory, setBlockFactory] = useState<Block>()
   const [minedBlock, setMinedBlock] = useState<Block>()
   const [nonce, setNonce] = useState<bigint>(BigInt(0))
@@ -74,6 +80,11 @@ const Home: NextPage = () => {
     const error = validator.dryAppendTransactions(blockchain, transactions)
     if(error) {
       console.log(error)
+      const e: TxError = {
+        index: error.transactionIndex,
+        message: error.message,
+      }
+      setTxErrors([e])
       return false
     }
     return true
@@ -238,7 +249,7 @@ const Home: NextPage = () => {
     socket.emit('send', e)
   }
 
-  const onAddHandler = (e: any) => {
+  const onTransactionAdded = (e: any) => {
     if (!selectedTransaction) {
       return
     }
@@ -273,7 +284,7 @@ const Home: NextPage = () => {
     }
     setSelectedTransaction(undefined)
   }
-  const onDiscardHandler = (e: any) => {
+  const onTransactionDiscarded = (e: any) => {
     if (!selectedTransaction || !mempool) {
       return
     }
@@ -282,7 +293,7 @@ const Home: NextPage = () => {
     setMempool(after)
     setSelectedTransaction(undefined)
   }
-  const onPropagateBlockHandler = (e: any) => {
+  const onBlockPropagated = (e: any) => {
     if (!minedBlock) {
       return
     }
@@ -337,10 +348,10 @@ const Home: NextPage = () => {
       <br />
       Message: {selectedTransaction?.getDests()[0].getMessageUtf8()}
       <br />
-      <button onClick={onAddHandler}>
+      <button onClick={onTransactionAdded}>
         add
       </button>
-      <button onClick={onDiscardHandler}>
+      <button onClick={onTransactionDiscarded}>
         discard
       </button>
       <br />
@@ -355,7 +366,7 @@ const Home: NextPage = () => {
       <br />
       <p>{nonce.toString()}</p>
       <p>mined: {minedBlock?.hashString()}</p>
-      <button onClick={onPropagateBlockHandler}>
+      <button onClick={onBlockPropagated}>
         propagate
       </button>
       <br />
