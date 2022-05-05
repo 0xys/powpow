@@ -18,6 +18,7 @@ import { Blockchain } from '../types/blockchain/blockchain'
 import { BlockchainValidator } from '../consensus/blockchain_validator'
 import { TransactionVerifier } from '../consensus/transaction_verifiier'
 import { ConsensusEngine } from '../consensus/consensus_engine'
+import { BlockFactoryComponent, TxError, RemoveTransaction } from './components/blockFactory'
 
 export let socket: Socket<DefaultEventsMap, DefaultEventsMap>
 
@@ -26,11 +27,6 @@ const blockReward = BigInt(10000)
 
 const fetcher = (url: string) => fetch(url).then(res => res.json())
 export type TryAppendBlock = (block: Block) => boolean
-
-type TxError = {
-  index: number,
-  message: string,
-}
 
 const verifier = new TransactionVerifier()
 const consensus = new ConsensusEngine()
@@ -51,6 +47,7 @@ const Home: NextPage = () => {
 
   const [txerrors, setTxErrors] = useState<TxError[]>([])
   const [blockFactory, setBlockFactory] = useState<Block>()
+  const [removeTx, setRemoveTx] = useState<RemoveTransaction>()
   const [minedBlock, setMinedBlock] = useState<Block>()
   const [nonce, setNonce] = useState<bigint>(BigInt(0))
 
@@ -178,23 +175,24 @@ const Home: NextPage = () => {
   
   // try mining block 
   useEffect(() => {
-    if(blockFactory) {
-      const mine = async () => {
-        let current = nonce
-        while (true) {
-          current += BigInt(1)
-          await new Promise(resolve => setTimeout(resolve, 100))
-          setNonce(current)
-          const candidate = blockFactory.mutateNonce(current)
-          if (validator.getConsensusEngine().isSolved(candidate)) {
-            const mined = new Block(version, blockFactory.getHeight(), blockFactory.getPrevBlockHash(), blockFactory.getTransactions(), current)
-            setMinedBlock(mined)
-            break
-          }
+    if(!blockFactory) {
+      return
+    }
+    const mine = async () => {
+      let current = nonce
+      while (true) {
+        current += BigInt(1)
+        await new Promise(resolve => setTimeout(resolve, 100))
+        setNonce(current)
+        const candidate = blockFactory.mutateNonce(current)
+        if (validator.getConsensusEngine().isSolved(candidate)) {
+          const mined = new Block(version, blockFactory.getHeight(), blockFactory.getPrevBlockHash(), blockFactory.getTransactions(), current)
+          setMinedBlock(mined)
+          break
         }
       }
-      mine()
     }
+    mine()
   }, [blockFactory])
 
   //  when receiving new block 
@@ -260,8 +258,8 @@ const Home: NextPage = () => {
       const afterTxs = [...blockFactory.getTransactions(), selectedTransaction]
       const success = dryRunTransactions(afterTxs)
       if (!success) {
-        console.log('error propagating block', success)
-        return
+        console.log('error in block factory', success)
+        //return
       }
 
       const afterBlock = new Block(version, BigInt(nextHeight), prevBlockHash, afterTxs, blockFactory.getNonce())
@@ -270,8 +268,8 @@ const Home: NextPage = () => {
       const afterTxs = [selectedTransaction]
       const success = dryRunTransactions(afterTxs)
       if (!success) {
-        console.log('error propagating block', success)
-        return
+        console.log('error in block factory', success)
+        //return
       }
       
       const afterBlock = new Block(version, BigInt(nextHeight), prevBlockHash, afterTxs, BigInt(0))
@@ -293,6 +291,29 @@ const Home: NextPage = () => {
     setMempool(after)
     setSelectedTransaction(undefined)
   }
+
+  const removeTxFromFactory = (hash: string) => {
+    return () => {
+      const nextHeight = blockchain.blocks.length
+      let prevBlockHash = blockchain.hash()
+      let afterTxs: Transaction[] = []
+
+      for (const tx of blockFactory?.getTransactions() ?? []) {
+        if(tx.hashString() != hash){
+          afterTxs.push(tx)
+        }
+      }
+
+      const success = dryRunTransactions(afterTxs)
+      if (!success) {
+        console.log('error in block factory after removal', success)
+      }
+
+      const afterBlock = new Block(version, BigInt(nextHeight), prevBlockHash, afterTxs, BigInt(0))
+      setBlockFactory(afterBlock)
+    }
+  }
+
   const onBlockPropagated = (e: any) => {
     if (!minedBlock) {
       return
@@ -356,18 +377,15 @@ const Home: NextPage = () => {
       </button>
       <br />
       <br />
-      Block
-      <br />
-      <ul>
-        {blockFactory?.getTransactions().map((tx, i) =>(
-          <li key={i}>{tx.hashString()}</li>
-        ))}
-      </ul>
+      <BlockFactoryComponent transactions={blockFactory?.getTransactions()??[]}
+        txerrors={txerrors}
+        height={blockFactory?.getHeight().toString()??''}
+        removeTransaction={removeTxFromFactory} />
       <br />
       <p>{nonce.toString()}</p>
       <p>mined: {minedBlock?.hashString()}</p>
-      <button onClick={onBlockPropagated}>
-        propagate
+      <button onClick={onBlockPropagated} disabled={txerrors.length > 0}>
+        {txerrors.length > 0 ? 'invalid block' : 'propagate'}
       </button>
       <br />
       Blocks
