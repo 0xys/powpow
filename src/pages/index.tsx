@@ -70,8 +70,8 @@ const Home: NextPage = () => {
     return true
   }
 
-  const dryRunBlock: TryAppendBlock = (block: Block): boolean => {
-    const error = validator.dryAppendBlock(blockchain, block)
+  const dryRunTransactions = (transactions: Transaction[]): boolean => {
+    const error = validator.dryAppendTransactions(blockchain, transactions)
     if(error) {
       console.log(error)
       return false
@@ -247,25 +247,23 @@ const Home: NextPage = () => {
 
     if (blockFactory) {
       const afterTxs = [...blockFactory.getTransactions(), selectedTransaction]
-      const afterBlock = new Block(version, BigInt(nextHeight), prevBlockHash, afterTxs, blockFactory.getNonce())
-      
-      const success = dryRunBlock(afterBlock)
+      const success = dryRunTransactions(afterTxs)
       if (!success) {
         console.log('error propagating block', success)
         return
       }
-      
+
+      const afterBlock = new Block(version, BigInt(nextHeight), prevBlockHash, afterTxs, blockFactory.getNonce())
       setBlockFactory(afterBlock)
     }else{
       const afterTxs = [selectedTransaction]
-      const afterBlock = new Block(version, BigInt(nextHeight), prevBlockHash, afterTxs, BigInt(0))
-
-      const success = dryRunBlock(afterBlock)
+      const success = dryRunTransactions(afterTxs)
       if (!success) {
         console.log('error propagating block', success)
         return
       }
       
+      const afterBlock = new Block(version, BigInt(nextHeight), prevBlockHash, afterTxs, BigInt(0))
       setBlockFactory(afterBlock)
     }
     if (mempool) {

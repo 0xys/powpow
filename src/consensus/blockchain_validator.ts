@@ -1,5 +1,6 @@
 import { Block } from "../types/blockchain/block";
 import { Blockchain } from "../types/blockchain/blockchain";
+import { Transaction } from "../types/blockchain/transaction";
 import { ConsensusEngineInterface } from "./consensus_engine"
 import { TransactionVerifierInterface } from "./transaction_verifiier";
 
@@ -111,12 +112,25 @@ export class BlockchainValidator {
 
     dryAppendBlock = (blockchain: Blockchain, block: Block): ChainValidationError|undefined => {
         const snapshot = this.cache.takeSnapshot()
-        const error = this.appendBlock(blockchain, block, false)
+        const error = this.appendBlock(blockchain, block)
         this.cache.revert(snapshot)
         return error
     }
 
-    private appendBlock = (blockchain: Blockchain, block: Block, validateBlockHeader: boolean = true): ChainValidationError|undefined => {
+    dryAppendTransactions = (blockchain: Blockchain, transactions: Transaction[]): ChainValidationError|undefined => {
+        const snapshot = this.cache.takeSnapshot()
+
+        const error = this.validateBlockTransactions(transactions)
+        this.cache.revert(snapshot)
+        if (error) {
+            const hashString = transactions[error.index].hashString()
+            return new ChainValidationError(blockchain.blocks.length, error.index, hashString, error.message)
+        }
+
+        return error
+    }
+
+    private appendBlock = (blockchain: Blockchain, block: Block): ChainValidationError|undefined => {
         //  if balance map not in sync with given blockchain
         if (blockchain.blocks.length > this.cache.getValidatedLength()) {
             const error = this.validateMissingChain(blockchain)
@@ -125,15 +139,13 @@ export class BlockchainValidator {
             }
         }
 
-        if (validateBlockHeader) {
-            const blockError = this.validateBlockConsensus(block)
-            if (blockError) {
-                //  block error doesn't set transaction index
-                return new ChainValidationError(blockchain.blocks.length, -1, '', blockError)
-            }
+        const blockError = this.validateBlockConsensus(block)
+        if (blockError) {
+            //  block error doesn't set transaction index
+            return new ChainValidationError(blockchain.blocks.length, -1, '', blockError)
         }
 
-        const error = this.validateBlockTransactions(block)
+        const error = this.validateBlockTransactions(block.getTransactions())
         if (error) {
             const hashString = block.getTransactions()[error.index].hashString()
             return new ChainValidationError(blockchain.blocks.length, error.index, hashString, error.message)
@@ -161,7 +173,7 @@ export class BlockchainValidator {
             }
 
             const snapshot = this.cache.takeSnapshot()
-            const error = this.validateBlockTransactions(block)
+            const error = this.validateBlockTransactions(block.getTransactions())
             if (error) {
                 this.cache.revert(snapshot)
                 const hashString = block.getTransactions()[error.index].hashString()
@@ -180,10 +192,10 @@ export class BlockchainValidator {
         return this.consensusEngine
     }
 
-    private validateBlockTransactions = (block: Block): {index: number, message: string}|undefined => {
+    private validateBlockTransactions = (transactions: Transaction[]): {index: number, message: string}|undefined => {
         let miner: string = ''
-        for (let i = 0; i < block.getTransactions().length; i++) {
-            const tx = block.getTransactions()[i]
+        for (let i = 0; i < transactions.length; i++) {
+            const tx = transactions[i]
 
             if (!this.verifier.verifySignature(tx)) {
                 return { index: i, message: 'invalid signature' }
