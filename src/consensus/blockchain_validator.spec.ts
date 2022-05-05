@@ -58,7 +58,7 @@ const createBlock = (coinbase: Transaction, txs: Transaction[], height: bigint, 
 test('single block validation', () => {
     const validator = new BlockchainValidator(verifier, engine)
 
-    const blockchain = new Blockchain()
+    const blockchain = new Blockchain([])
 
     const coinbase = Transaction.Coinbase(BigInt(0), dealer0.getPrivateKey(), BigInt(10000))
     const tx0 = createTx(dealer0, wallet0.getAddressBuffer(), BigInt(100))
@@ -82,7 +82,7 @@ test('single block validation', () => {
 test('single block validation 2', () => {
     const validator = new BlockchainValidator(verifier, engine)
 
-    const blockchain = new Blockchain()
+    const blockchain = new Blockchain([])
 
     let hash0: Buffer
     {
@@ -109,7 +109,7 @@ test('single block validation 2', () => {
 test('two blocks validation', () => {
     const validator = new BlockchainValidator(verifier, engine)
 
-    const blockchain = new Blockchain()
+    const blockchain = new Blockchain([])
 
     let hash0: Buffer
     {
@@ -146,7 +146,7 @@ test('two blocks validation', () => {
 test('two blocks validation 2', () => {
     const validator = new BlockchainValidator(verifier, engine)
 
-    const blockchain = new Blockchain()
+    const blockchain = new Blockchain([])
 
     let hash0: Buffer
     {
@@ -183,7 +183,7 @@ test('two blocks validation 2', () => {
 test('two blocks out of order', () => {
     const validator = new BlockchainValidator(verifier, engine)
 
-    const blockchain = new Blockchain()
+    const blockchain = new Blockchain([])
 
     let hash0: Buffer
     {
@@ -207,7 +207,7 @@ test('two blocks out of order', () => {
 test('wrong previous hash', () => {
     const validator = new BlockchainValidator(verifier, engine)
 
-    const blockchain = new Blockchain()
+    const blockchain = new Blockchain([])
 
     {
         const coinbase = Transaction.Coinbase(BigInt(0), dealer0.getPrivateKey(), BigInt(10000))
@@ -229,7 +229,7 @@ test('wrong previous hash', () => {
 test('test appending correct block', () => {
     const validator = new BlockchainValidator(verifier, engine)
 
-    const blockchain = new Blockchain()
+    const blockchain = new Blockchain([])
 
     // first block
     let hash0: Buffer
@@ -269,10 +269,52 @@ test('test appending correct block', () => {
     expect(Number(validator.cache.getBalance(wallet2.getAddress()))).toBe(170)
 })
 
+test('test dry appending correct block', () => {
+    const validator = new BlockchainValidator(verifier, engine)
+
+    const blockchain = new Blockchain([])
+
+    // first block
+    let hash0: Buffer
+    {
+        const coinbase = Transaction.Coinbase(BigInt(0), dealer0.getPrivateKey(), BigInt(10000))
+        const tx0 = createTx(dealer0, wallet0.getAddressBuffer(), BigInt(100))
+        const tx1 = createTx(dealer0, wallet1.getAddressBuffer(), BigInt(100))
+        const tx2 = createTx(wallet1, wallet2.getAddressBuffer(), BigInt(10))
+        const block = createBlock(coinbase, [tx0, tx1, tx2], BigInt(0), Buffer.allocUnsafe(32).fill(0))
+        blockchain.blocks.push(block)
+        hash0 = block.hash()
+    }
+
+    const error0 = validator.validateEntireChainFromZero(blockchain)
+    expect(error0).toBe(undefined)
+    expect(validator.cache.getValidatedLength()).toBe(1)
+
+    //  second block
+    const coinbase = Transaction.Coinbase(BigInt(1), dealer1.getPrivateKey(), BigInt(10000))
+    const tx0 = createTx(dealer1, wallet0.getAddressBuffer(), BigInt(1000))
+    const tx1 = createTx(wallet0, wallet1.getAddressBuffer(), BigInt(90))
+    const tx2 = createTx(wallet1, wallet2.getAddressBuffer(), BigInt(160))
+    const block = createBlock(coinbase, [tx0, tx1, tx2], BigInt(1), hash0)
+
+    const error1 = validator.dryAppendBlock(blockchain, block)
+    expect(error1).toBe(undefined)
+    expect(validator.cache.getValidatedLength()).toBe(1)
+
+    expect(blockchain.blocks.length).toBe(1)    //  block is not appended
+    expect(blockchain.hashString()).toBe(hash0.toString('hex'))      //  hash of the first block
+
+    //  balance is of at height 0 
+    expect(Number(validator.cache.getBalance(dealer0.getAddress()))).toBe(9810)
+    expect(Number(validator.cache.getBalance(wallet0.getAddress()))).toBe(100)
+    expect(Number(validator.cache.getBalance(wallet1.getAddress()))).toBe(80)
+    expect(Number(validator.cache.getBalance(wallet2.getAddress()))).toBe(10)
+})
+
 test('test appending wrong block', () => {
     const validator = new BlockchainValidator(verifier, engine)
 
-    const blockchain = new Blockchain()
+    const blockchain = new Blockchain([])
 
     // first block
     let hash0: Buffer
@@ -312,7 +354,7 @@ test('test appending wrong block', () => {
 test('test validate longer blockchain than current one', () => {
     const validator = new BlockchainValidator(verifier, engine)
 
-    const blockchain = new Blockchain()
+    const blockchain = new Blockchain([])
 
     // first block
     let hash0: Buffer
