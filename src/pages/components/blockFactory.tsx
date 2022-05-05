@@ -6,8 +6,7 @@ export type TxError = {
     message: string,
 }
 
-type AddTransaction = (hash: string) => void;
-export type RemoveTransaction = (hash: string) => () => void;
+type RemoveTransaction = (hash: string) => void;
 
 export const BlockFactoryComponent = 
 (prop: {
@@ -36,7 +35,7 @@ export const BlockFactoryComponent =
             <ul>
                 {wrappedTxs.map((tx,j) => (
                     <li key={tx.tx.hashString()}>
-                        {tx.tx.hashString()} {tx.message} <button onClick={removeTransaction(tx.tx.hashString())}>x</button>
+                        {tx.tx.hashString()} {tx.message} <button onClick={() => removeTransaction(tx.tx.hashString())}>x</button>
                     </li>
                 ))}
             </ul>

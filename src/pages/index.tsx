@@ -18,7 +18,7 @@ import { Blockchain } from '../types/blockchain/blockchain'
 import { BlockchainValidator } from '../consensus/blockchain_validator'
 import { TransactionVerifier } from '../consensus/transaction_verifiier'
 import { ConsensusEngine } from '../consensus/consensus_engine'
-import { BlockFactoryComponent, TxError, RemoveTransaction } from './components/blockFactory'
+import { BlockFactoryComponent, TxError } from './components/blockFactory'
 
 export let socket: Socket<DefaultEventsMap, DefaultEventsMap>
 
@@ -47,7 +47,6 @@ const Home: NextPage = () => {
 
   const [txerrors, setTxErrors] = useState<TxError[]>([])
   const [blockFactory, setBlockFactory] = useState<Block>()
-  const [removeTx, setRemoveTx] = useState<RemoveTransaction>()
   const [minedBlock, setMinedBlock] = useState<Block>()
   const [nonce, setNonce] = useState<bigint>(BigInt(0))
 
@@ -83,6 +82,8 @@ const Home: NextPage = () => {
       }
       setTxErrors([e])
       return false
+    }else{
+      setTxErrors([])
     }
     return true
   }
@@ -293,8 +294,7 @@ const Home: NextPage = () => {
   }
 
   const removeTxFromFactory = (hash: string) => {
-    return () => {
-      const nextHeight = blockchain.blocks.length
+    const nextHeight = blockchain.blocks.length
       let prevBlockHash = blockchain.hash()
       let afterTxs: Transaction[] = []
 
@@ -311,7 +311,6 @@ const Home: NextPage = () => {
 
       const afterBlock = new Block(version, BigInt(nextHeight), prevBlockHash, afterTxs, BigInt(0))
       setBlockFactory(afterBlock)
-    }
   }
 
   const onBlockPropagated = (e: any) => {
