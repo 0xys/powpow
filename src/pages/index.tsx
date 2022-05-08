@@ -179,18 +179,24 @@ const Home: NextPage = () => {
     if(!blockFactory) {
       return
     }
+
+    //  don't mine when block is invalid
+    if(txerrors.length > 0) {
+      return;
+    }
+
     const mine = async () => {
       let current = nonce
       while (true) {
-        current += BigInt(1)
-        await new Promise(resolve => setTimeout(resolve, 100))
-        setNonce(current)
         const candidate = blockFactory.mutateNonce(current)
         if (validator.getConsensusEngine().isSolved(candidate)) {
           const mined = new Block(version, blockFactory.getHeight(), blockFactory.getPrevBlockHash(), blockFactory.getTransactions(), current)
           setMinedBlock(mined)
           break
         }
+        await new Promise(resolve => setTimeout(resolve, 100))
+        current += BigInt(1)
+        setNonce(current)
       }
     }
     mine()
