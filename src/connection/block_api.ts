@@ -28,7 +28,7 @@ export class DefaultBlockApi implements BlockApi {
     tryAppendBlock = async (block: Block): Promise<boolean> => {
         const error = this.validator.tryAppendBlock(this.blockchain, block)
         if(!error) {
-            return true    
+            return true
         }
         this.blocks.set(block.hashString(), block) 
         console.log('malformed block ', error.height, 'received:', error.message)
