@@ -107,7 +107,17 @@ const Home: NextPage = () => {
         setReceivedBlock(block)
       })
     }
+
+    // poll new block every 10 seconds
+    const blockPoller = async () =>{
+      while(true){
+        const res = await fetcher('api/blocks/latest')
+        console.log('latest block:', res.height)
+        await new Promise(resolve => setTimeout(resolve, 10_000))
+      }
+    }
     socketInitializer()
+    blockPoller()
   }, [])
 
   // mempool receives transaction

@@ -4,7 +4,7 @@ import { Server } from 'socket.io'
 import { DefaultBlockApi } from '../../connection/block_api'
 import { Block } from '../../types/blockchain/block'
 
-const api = new DefaultBlockApi()
+export const api = new DefaultBlockApi()
 
 const SocketHandler = (req: IncomingMessage, res: any) => {
     if (res.socket.server.io) {

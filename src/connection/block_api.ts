@@ -30,7 +30,7 @@ export class DefaultBlockApi implements BlockApi {
         if(!error) {
             return true
         }
-        this.blocks.set(block.hashString(), block) 
+        this.blocks.set(block.hashString(), block)
         console.log('malformed block ', error.height, 'received:', error.message)
         return false
     }
