@@ -38,7 +38,6 @@ const Home: NextPage = () => {
   const [selectedWallet, setSelectedWallet] = useState<Wallet>()
   const [fetchedWallet, setFetchedWallet] = useState<FetchedWallet>()
 
-  //const [blocks, setBlocks] = useState<Block[]>([])
   const [receivedBlock, setReceivedBlock] = useState<Block>()
 
   const [mempool, setMempool] = useState<Mempool>()
@@ -63,8 +62,7 @@ const Home: NextPage = () => {
     }
     setReceivedBlockValidaity(true)
 
-    const afterBc = new Blockchain([...blockchain.blocks])
-    setBlockchain(afterBc)
+    setBlockchain({...blockchain})
 
     const afeterV = new BlockchainValidator(verifier, consensus)
     afeterV.cache = validator.cache;
