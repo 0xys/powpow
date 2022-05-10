@@ -387,7 +387,7 @@ const Home: NextPage = () => {
       <br />
       <p>{nonce.toString()}</p>
       <p>mined: {minedBlock?.hashString()}</p>
-      <button onClick={onBlockPropagated} disabled={txerrors.length > 0}>
+      <button onClick={onBlockPropagated} disabled={txerrors.length > 0 || !minedBlock}>
         {txerrors.length > 0 ? 'invalid block' : 'propagate'}
       </button>
       <br />
