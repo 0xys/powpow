@@ -131,7 +131,7 @@ export class BlockchainValidator {
     }
 
     private appendBlock = (blockchain: Blockchain, block: Block): ChainValidationError|undefined => {
-        //  if balance map not in sync with given blockchain
+        //  if given blockchain is longer than the length of blockchain that generated the current balance map.
         if (blockchain.blocks.length > this.cache.getValidatedLength()) {
             const error = this.validateMissingChain(blockchain)
             if (error) {

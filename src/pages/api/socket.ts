@@ -28,11 +28,10 @@ const SocketHandler = (req: IncomingMessage, res: any) => {
 
             socket.on('propagate', msg => {
                 const block = Block.decode(Buffer.from(msg, 'hex'))
+                console.log(`block[${block.getHeight().toString()}]`, msg)
                 if(!validate(block)){
                     return
                 }
-                console.log('block', msg)
-                blockchain.blocks.push(block)
                 socket.broadcast.emit('new-block', msg)
             })
         })
