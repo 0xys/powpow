@@ -5,12 +5,12 @@ import { api } from '../socket'
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse<{height: number, block?: Block}>
+  res: NextApiResponse<{height: number, block?: Buffer}>
 ) {
 
   const latestHeight = await api.getLatestHeight()
   const latest = await api.getLatestBlock()
   console.log(`block api 'latest'`, latestHeight)
 
-  res.status(200).json({height: latestHeight, block: latest})
+  res.status(200).json({height: latestHeight, block: latest?.encode()})
 }

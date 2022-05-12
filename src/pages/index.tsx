@@ -20,7 +20,7 @@ import { TransactionVerifier } from '../consensus/transaction_verifiier'
 import { ConsensusEngine } from '../consensus/consensus_engine'
 import { BlockFactoryComponent, TxError } from './components/blockFactory'
 
-export let socket: Socket<DefaultEventsMap, DefaultEventsMap>
+// let socket: Socket<DefaultEventsMap, DefaultEventsMap>
 
 const version = BigInt(0)
 const blockReward = BigInt(10000)
@@ -33,6 +33,7 @@ const consensus = new ConsensusEngine()
 const defaultValidator = new BlockchainValidator(verifier, consensus)
 
 const Home: NextPage = () => {
+  const [socket, _] = useState(() => io())
   const [mnemonic, setMnemonic] = useState<string>('')
   const [miner, setMiner] = useState<Miner>()
   const [selectedWallet, setSelectedWallet] = useState<Wallet>()
@@ -89,7 +90,6 @@ const Home: NextPage = () => {
   useEffect(() => {
     const socketInitializer = async () => {
       await fetch('api/socket')
-      socket = io()
   
       socket.on('connect', () => {
         console.log('connected')
