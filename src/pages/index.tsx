@@ -117,25 +117,25 @@ const Home: NextPage = () => {
           continue
         }
         console.log('latest block:', res.height)
-        let prevBlock = Block.decode(res.block)
-        let prevHash = prevBlock.hashString()
+        let currentBlock = Block.decode(res.block)
+        let currentHash = currentBlock.hashString()
 
         let reorgedChain: Block[] = []
         //  reorg blockchain
-        while (!validator.blocks.has(prevHash)) {
-          const res: {height: number, block?: Buffer} = await fetcher(`api/blocks/${prevBlock.getPrevBlockHashString()}`)
+        while (!validator.blocks.has(currentHash)) {
+          currentHash = currentBlock.getPrevBlockHashString()
+          const res: {height: number, block?: Buffer} = await fetcher(`api/blocks/${currentHash}`)
           if(!res.block) {
-            console.log(`couldn't fetch block ${prevBlock.getPrevBlockHashString()} from server.`)
+            console.log(`couldn't fetch block ${currentHash} from server.`)
             break
           }
-          prevBlock = Block.decode(res.block)
-          prevHash = prevBlock.hashString()
-          reorgedChain = [prevBlock, ...reorgedChain]
+          currentBlock = Block.decode(res.block)
+          reorgedChain = [currentBlock, ...reorgedChain]
         }
 
         //  replace reorged portion of blockchain with correct one
         if(reorgedChain.length > 0) {
-          const correctUpto = Number(prevBlock.getHeight())
+          const correctUpto = Number(currentBlock.getHeight())
 
           const newBlockchain = new Blockchain([...blockchain.blocks.slice(0, correctUpto), ...reorgedChain.slice(1)])
           const newValidator = new BlockchainValidator(verifier, consensus)
