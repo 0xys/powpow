@@ -90,6 +90,7 @@ export class ChainValidationError {
 
 export class BlockchainValidator {
     cache: BalanceMapCache = BalanceMapCache.Empty()
+    blocks: Map<string, Block> = new Map()
 
     constructor(
         private verifier: TransactionVerifierInterface,
@@ -107,6 +108,7 @@ export class BlockchainValidator {
         }
 
         blockchain.blocks.push(block)
+        this.blocks.set(block.hashString(), block)
         this.cache.setValidatedLength(blockchain.blocks.length)
     }
 

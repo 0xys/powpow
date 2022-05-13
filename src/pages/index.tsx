@@ -111,8 +111,45 @@ const Home: NextPage = () => {
     // poll new block every 10 seconds
     const blockPoller = async () =>{
       while(true){
-        const res = await fetcher('api/blocks/latest')
+        const res: {height: number, block?: Buffer} = await fetcher('api/blocks/latest')
+        if (!res.block) {
+          await new Promise(resolve => setTimeout(resolve, 10_000))
+          continue
+        }
         console.log('latest block:', res.height)
+        let prevBlock = Block.decode(res.block)
+        let prevHash = prevBlock.hashString()
+
+        let reorgedChain: Block[] = []
+        //  reorg blockchain
+        while (!validator.blocks.has(prevHash)) {
+          const res: {height: number, block?: Buffer} = await fetcher(`api/blocks/${prevBlock.getPrevBlockHashString()}`)
+          if(!res.block) {
+            console.log(`couldn't fetch block ${prevBlock.getPrevBlockHashString()} from server.`)
+            break
+          }
+          prevBlock = Block.decode(res.block)
+          prevHash = prevBlock.hashString()
+          reorgedChain = [prevBlock, ...reorgedChain]
+        }
+
+        //  replace reorged portion of blockchain with correct one
+        if(reorgedChain.length > 0) {
+          const correctUpto = Number(prevBlock.getHeight())
+
+          const newBlockchain = new Blockchain([...blockchain.blocks.slice(0, correctUpto), ...reorgedChain.slice(1)])
+          const newValidator = new BlockchainValidator(verifier, consensus)
+          const err = newValidator.validateEntireChainFromZero(newBlockchain)
+          if(err) {
+            console.log(err)
+            await new Promise(resolve => setTimeout(resolve, 10_000))
+            continue
+          }
+
+          setBlockchain(newBlockchain)
+          setValidator(newValidator)
+        }
+
         await new Promise(resolve => setTimeout(resolve, 10_000))
       }
     }
