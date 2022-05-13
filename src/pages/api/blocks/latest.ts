@@ -1,13 +1,14 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { Block } from '../../../types/blockchain/block'
-import { api } from '../socket'
+import { DefaultBlockApi } from '../../../connection/block_api'
+
+const api = new DefaultBlockApi()
+
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<{height: number, block?: Buffer}>
 ) {
-
   const latestHeight = await api.getLatestHeight()
   const latest = await api.getLatestBlock()
   console.log(`block api 'latest'`, latestHeight)
