@@ -19,6 +19,7 @@ import { BlockchainValidator } from '../consensus/blockchain_validator'
 import { TransactionVerifier } from '../consensus/transaction_verifiier'
 import { ConsensusEngine } from '../consensus/consensus_engine'
 import { BlockFactoryComponent, TxError } from './components/blockFactory'
+import { reorg } from '../consensus/reorger'
 
 // let socket: Socket<DefaultEventsMap, DefaultEventsMap>
 
@@ -117,27 +118,15 @@ const Home: NextPage = () => {
           continue
         }
         console.log('latest block:', res.height)
-        let currentBlock = Block.decode(res.block)
-        let currentHash = currentBlock.hashString()
-
-        let reorgedChain: Block[] = []
-        //  reorg blockchain
-        while (!validator.blocks.has(currentHash)) {
-          currentHash = currentBlock.getPrevBlockHashString()
-          const res: {height: number, block?: Buffer} = await fetcher(`api/blocks/${currentHash}`)
-          if(!res.block) {
-            console.log(`couldn't fetch block ${currentHash} from server.`)
-            break
-          }
-          currentBlock = Block.decode(res.block)
-          reorgedChain = [currentBlock, ...reorgedChain]
-        }
+        let currentLatestBlock = Block.decode(res.block)
+      
+        const reorgedChain = await reorg(validator.blocks, currentLatestBlock, async (hash: string) => fetcher(`api/blocks/${hash}`))
 
         //  replace reorged portion of blockchain with correct one
         if(reorgedChain.length > 0) {
-          const correctUpto = Number(currentBlock.getHeight())
+          const reorgStartHeight = Number(reorgedChain[0].getHeight())
 
-          const newBlockchain = new Blockchain([...blockchain.blocks.slice(0, correctUpto), ...reorgedChain.slice(1)])
+          const newBlockchain = new Blockchain([...blockchain.blocks.slice(0, reorgStartHeight), ...reorgedChain])
           const newValidator = new BlockchainValidator(verifier, consensus)
           const err = newValidator.validateEntireChainFromZero(newBlockchain)
           if(err) {
