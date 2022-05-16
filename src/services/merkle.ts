@@ -17,8 +17,8 @@ export const merkle = (items: Buffer[]): Buffer => {
     while(true) {
         const parentArrays: Buffer[] = []
 
-        for (let i = 0; i < currentArrays.length; i+=2) {
-            const parent = getParent(currentArrays[i], currentArrays[i+1])
+        for (let i = 1; i < currentArrays.length; i+=2) {
+            const parent = getParent(currentArrays[i-1], currentArrays[i])
             parentArrays.push(parent)
         }
 
