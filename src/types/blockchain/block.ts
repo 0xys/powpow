@@ -1,9 +1,11 @@
 import { toBigIntBE, toBufferBE } from 'bigint-buffer'
 import { Transaction } from './transaction'
 import { createHash } from 'crypto';
+import { merkle } from '../../services/merkle';
 
 export class Block {
     private difficultyTarget: bigint
+    private merkleRoot: Buffer
     constructor(
         private version: bigint,
         private height: bigint,
@@ -18,6 +20,7 @@ export class Block {
             //  initial difficulty
             this.difficultyTarget = toBigIntBE(Buffer.from([0xee, 0x00, 0x00, 0x00]))
         }
+        this.merkleRoot = Block.calculateMerkleRoot(transactions)
     }
 
     // 4 byte
@@ -46,6 +49,10 @@ export class Block {
         return toBufferBE(this.difficultyTarget, 4)
     }
 
+    // 32 byte
+    getMerkleRoot = (): Buffer => {
+        return this.merkleRoot
+    }
     getTransactions = (): Transaction[] => {
         return this.transactions
     }
@@ -56,8 +63,8 @@ export class Block {
     }
 
     hash = (): Buffer => {
-        const body = this.encode()
-        const hashed = createHash('sha256').update(body).digest()
+        const header = this.encodeHeader()
+        const hashed = createHash('sha256').update(header).digest()
         return hashed
     }
     hashString = (): string => {
@@ -71,30 +78,8 @@ export class Block {
         return new Block(this.version, this.height, this.prevBlockHash, this.transactions, nonce, this.difficultyTarget)
     }
     hashWith = (nonce: bigint): Buffer => {
-        let bufs: Buffer[] = []
-
-        const versionBuf = toBufferBE(this.version, 4)
-        bufs.push(versionBuf)
-
-        const heightBuf = toBufferBE(this.height, 4)
-        bufs.push(heightBuf)
-
-        bufs.push(this.prevBlockHash)
-
-        bufs.push(this.getDifficultyTargetBuffer())
-
-        const lenBuf = conv(this.transactions.length)
-        bufs.push(lenBuf)
-
-        for (const tx of this.transactions) {
-            bufs.push(tx.encode())
-        }
-
-        const nonceBuf = toBufferBE(nonce, 4)
-        bufs.push(nonceBuf)
-
-        const body = Buffer.concat(bufs)
-        const hashed = createHash('sha256').update(body).digest()
+        const header = this._encodeHeader(nonce)
+        const hashed = createHash('sha256').update(header).digest()
         return hashed
     }
 
@@ -114,6 +99,8 @@ export class Block {
         const lenBuf = conv(this.transactions.length)
         bufs.push(lenBuf)
 
+        // note: merkle root not included
+
         for (const tx of this.transactions) {
             bufs.push(tx.encode())
         }
@@ -125,6 +112,41 @@ export class Block {
     }
     encodeToHex = (): string => {
         return this.encode().toString('hex')
+    }
+
+    encodeHeader = (): Buffer => {
+        return this._encodeHeader(this.nonce)
+    }
+    encodeHeaderHex = (): string => {
+        return this._encodeHeader(this.nonce).toString('hex')
+    }
+    
+    private _encodeHeader = (nonce: bigint): Buffer => {
+        let bufs: Buffer[] = []
+
+        const versionBuf = toBufferBE(this.version, 4)
+        bufs.push(versionBuf)
+
+        const heightBuf = toBufferBE(this.height, 4)
+        bufs.push(heightBuf)
+
+        bufs.push(this.prevBlockHash)
+
+        bufs.push(this.getDifficultyTargetBuffer())
+
+        const lenBuf = conv(this.transactions.length)
+        bufs.push(lenBuf)
+
+        bufs.push(this.merkleRoot)
+
+        const nonceBuf = toBufferBE(nonce, 4)
+        bufs.push(nonceBuf)
+
+        return Buffer.concat(bufs)
+    }
+
+    private static calculateMerkleRoot = (txs: Transaction[]): Buffer => {
+        return merkle(txs.map(x => x.hash()))
     }
 
     static decode = (blob: Buffer): Block => {
