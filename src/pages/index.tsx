@@ -96,7 +96,7 @@ const Home: NextPage = () => {
 
     const socketInitializer = async () => {
       //await fetch('api/socket')
-      await axios.post('api/socket', {id: miner.getNodePublicKeyString()})
+      await axios.post('api/socket', {pubkey: miner.getNodePublicKeyString()})
   
       socket.on('connect', () => {
         console.log('connected')
