@@ -6,7 +6,10 @@ import { Block } from '../../types/blockchain/block'
 
 export const api = new DefaultBlockApi()
 
-const SocketHandler = (req: IncomingMessage, res: any) => {
+const SocketHandler = (req: any, res: any) => {
+
+    console.log(req.body)
+
     if (res.socket.server.io) {
         console.log('socket connection already established')
     } else {

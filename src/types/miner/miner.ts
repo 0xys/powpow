@@ -8,18 +8,31 @@ export const defaultNumOfWallets = 6
 
 export class Miner {
     private wallets: Wallet[] = []
-    private mempool: Mempool;
+    private mempool: Mempool
+    private nodePublicKey: Buffer
+    private nodePrivateKey: Buffer
 
     constructor(private mnemonic: string, private name: string, private machines: Machine[], private batteries: Battery[]){
         const seed = bip39.mnemonicToSeedSync(mnemonic)
         const root = hdkey.fromMasterSeed(seed)
         for (let i = 0; i < defaultNumOfWallets; i++) {
-            const node = root.derive(`m/44'/1234'/0'/${i}`)
-            const wallet = new Wallet(node.privateKey)
+            const child = root.derive(`m/44'/1234'/0'/${i}`)
+            const wallet = new Wallet(child.privateKey)
             this.wallets.push(wallet)
         }
 
+        const nodeKey = root.derive('m/0')
+        this.nodePrivateKey = nodeKey.privateKey
+        this.nodePublicKey = nodeKey.publicKey
+
         this.mempool = Mempool.Empty()
+    }
+
+    getNodePublicKey = (): Buffer => {
+        return this.nodePublicKey
+    }
+    getNodePublicKeyString = (): string => {
+        return this.nodePublicKey.toString('hex')
     }
 
     getMnemonic = (): string => {

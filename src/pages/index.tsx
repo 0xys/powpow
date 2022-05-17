@@ -20,6 +20,7 @@ import { TransactionVerifier } from '../consensus/transaction_verifiier'
 import { ConsensusEngine } from '../consensus/consensus_engine'
 import { BlockFactoryComponent, TxError } from './components/blockFactory'
 import { reorg } from '../consensus/reorger'
+import axios from 'axios'
 
 // let socket: Socket<DefaultEventsMap, DefaultEventsMap>
 
@@ -89,8 +90,13 @@ const Home: NextPage = () => {
   }
 
   useEffect(() => {
+    if(!miner) {
+      return
+    }
+
     const socketInitializer = async () => {
-      await fetch('api/socket')
+      //await fetch('api/socket')
+      await axios.post('api/socket', {id: miner.getNodePublicKeyString()})
   
       socket.on('connect', () => {
         console.log('connected')
@@ -144,7 +150,7 @@ const Home: NextPage = () => {
     }
     socketInitializer()
     blockPoller()
-  }, [])
+  }, [miner])
 
   // mempool receives transaction
   useEffect(() => {

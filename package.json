@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@types/hdkey": "^2.0.1",
+    "axios": "^0.27.2",
     "bigint-buffer": "^1.1.5",
     "bip39": "^3.0.4",
     "hdkey": "^2.0.1",
