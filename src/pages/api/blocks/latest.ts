@@ -8,7 +8,7 @@ import { FirestoreBlockApi } from '../../../connection/firestore_block_api';
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse<{height: number, block?: Buffer}>
+  res: NextApiResponse<{height: number, blockHex?: string}>
 ) {
   if (admin.apps.length === 0) {
     admin.initializeApp({
@@ -22,5 +22,5 @@ export default async function handler(
   const latest = await api.getLatestBlock()
   console.log(`block api 'latest'`, latestHeight, latest?.hashString())
 
-  res.status(200).json({height: latestHeight, block: latest?.encode()})
+  res.status(200).json({height: latestHeight, blockHex: latest?.encodeToHex()})
 }

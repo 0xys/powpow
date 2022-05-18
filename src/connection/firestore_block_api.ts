@@ -98,7 +98,7 @@ export class FirestoreBlockApi implements BlockApi {
         }
 
         const ret: {data: string} = data
-        console.log(`getBlockByHash(${hashString})`, ret.data)
+        console.log(` - getBlockByHash(${hashString})`, ret.data, '\n')
         const decoded = Block.decode(Buffer.from(ret.data, 'hex'))
         return decoded
     }

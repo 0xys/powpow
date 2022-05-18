@@ -118,13 +118,15 @@ const Home: NextPage = () => {
     // poll new block every 10 seconds
     const blockPoller = async () =>{
       while(true){
-        const res: {height: number, block?: Buffer} = await fetcher('api/blocks/latest')
-        if (!res.block) {
+        const res: {height: number, blockHex?: string} = await fetcher('api/blocks/latest')
+        console.log(res)
+        if (!res.blockHex) {
           await new Promise(resolve => setTimeout(resolve, 10_000))
           continue
         }
         console.log('latest block:', res.height)
-        let currentLatestBlock = Block.decode(res.block)
+        const blob = Buffer.from(res.blockHex, 'hex')
+        let currentLatestBlock = Block.decode(blob)
       
         const reorgedChain = await reorg(validator.blocks, currentLatestBlock, async (hash: string) => fetcher(`api/blocks/${hash}`))
 
