@@ -14,16 +14,34 @@ export class FirestoreBlockApi implements BlockApi {
                 const thisBlockRef = this.db.collection('blocks').doc(block.hashString())
                 const thisBlock = await t.get(thisBlockRef)
                 if(thisBlock.exists) {
-                    return 'failure'    // duplicate disallowed
+                    return 'failure'    // duplicate disallowed.
+                }
+
+                const latestHeightRef = this.db.collection('latest').doc('height')
+                const latestHeight = await latestHeightRef.get()
+                if(!latestHeight.exists) {  // this block is genesis
+                    t.set(latestHeightRef, { num: 0 })  // genesis block height is 0.
+                } else {    // this block is non-genesis
+                    const currentLatestHeight: number = latestHeight.data()?.num
+                    let nextLatestHeight = currentLatestHeight
+                    const thisBlockHeight = Number(block.getHeight())
+                    if (thisBlockHeight > currentLatestHeight) {
+                        nextLatestHeight = thisBlockHeight
+                    }
+
+                    // non-genesis block must have prev block
+                    const prevBlockRef = this.db.collection('blocks').doc(block.getPrevBlockHashString())
+                    const prevBlock = await t.get(prevBlockRef)
+
+                    if(!prevBlock.exists) {
+                        return 'failure'    // prev block must exist.
+                    }
+
+                    //  write must come after all reads.
+                    t.update(latestHeightRef, { num: nextLatestHeight })
                 }
     
-                const prevBlockRef = this.db.collection('blocks').doc(block.getPrevBlockHashString())
-                const prevBlock = await t.get(prevBlockRef)
-                if(!prevBlock.exists) {
-                    return 'failure'    // prev block must exist
-                }
-    
-                t.set(thisBlockRef, block)  // add this block as new block entry
+                t.set(thisBlockRef, block)  // add this block as new block entry.
     
                 return 'success'
             })
@@ -42,7 +60,8 @@ export class FirestoreBlockApi implements BlockApi {
             return 0
         }
 
-        return Number(data)
+        const d: {num: number} = data
+        return d.num
     }
 
     getLatestBlock = async (): Promise<Block|undefined> => {
@@ -52,8 +71,9 @@ export class FirestoreBlockApi implements BlockApi {
         if (!data) {
             return undefined
         }
-        const hash: string = data
-        return await this.getBlockByHash(hash)
+
+        const d: {hash: string} = data
+        return await this.getBlockByHash(d.hash)
     }
 
     getBlockByHash = async (hashString: string): Promise<Block|undefined> => {
