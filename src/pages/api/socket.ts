@@ -4,17 +4,20 @@ import { Server } from 'socket.io'
 import { DefaultBlockApi } from '../../connection/block_api'
 import { Block } from '../../types/blockchain/block'
 
-// id -> pubkey
-const clientMap = new Map<string, string>()
-export const api = new DefaultBlockApi()
+import admin from'firebase-admin';
+import { applicationDefault } from'firebase-admin/app';
+import { getFirestore } from 'firebase-admin/firestore';
+import { FirestoreBlockApi } from '../../connection/firestore_block_api';
 
 const SocketHandler = (req: any, res: any) => {
-    const pubkey = req.body.pubkey
-    if (!pubkey) {
-        console.log('pubkey not provided')
-        res.end()
+
+    if (admin.apps.length === 0) {
+        admin.initializeApp({
+            credential: applicationDefault()
+        })
     }
-    console.log('socket request from', pubkey)
+    const db = getFirestore()
+    const api = new FirestoreBlockApi(db)
 
     if (res.socket.server.io) {
         console.log('socket connection already established')
@@ -24,11 +27,6 @@ const SocketHandler = (req: any, res: any) => {
         res.socket.server.io = io
 
         io.on('connection', socket => {
-            console.log(socket.id, ':', socket.data)
-
-            clientMap.set(socket.id, pubkey)
-            console.log('map:', socket.id, '->', pubkey)
-            
             socket.on('send', msg => {
                 socket.broadcast.emit('new-transaction', msg)
             })
@@ -36,8 +34,8 @@ const SocketHandler = (req: any, res: any) => {
             socket.on('propagate', async msg => {
                 const block = Block.decode(Buffer.from(msg, 'hex'))
                 console.log(`block[${block.getHeight().toString()}]`, msg)
-                const ok = await api.tryAppendBlock(block)
-                if(!ok) {
+                const status = await api.tryAppendBlock(block)
+                if(status != 'success') {
                     return
                 }
                 socket.broadcast.emit('new-block', msg)
