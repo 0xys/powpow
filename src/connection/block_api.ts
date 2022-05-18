@@ -4,9 +4,10 @@ import { TransactionVerifier } from "../consensus/transaction_verifiier"
 import { Block } from "../types/blockchain/block"
 import { Blockchain } from "../types/blockchain/blockchain"
 
+export type AppendResult = 'success'|'failure'|'error'
 
 export interface BlockApi {
-    tryAppendBlock(block: Block): Promise<boolean> 
+    tryAppendBlock(block: Block): Promise<AppendResult> 
     getLatestHeight(): Promise<number>
     getLatestBlock(): Promise<Block|undefined>
     getBlockByHash(hashString: string): Promise<Block|undefined>
@@ -25,14 +26,14 @@ export class DefaultBlockApi implements BlockApi {
         this.blocks = new Map<string, Block>()
     }
 
-    tryAppendBlock = async (block: Block): Promise<boolean> => {
+    tryAppendBlock = async (block: Block): Promise<AppendResult> => {
         const error = this.validator.tryAppendBlock(this.blockchain, block)
         if(!error) {
-            return true
+            return 'success'
         }
         this.blocks.set(block.hashString(), block)
         console.log('malformed block ', error.height, 'received:', error.message)
-        return false
+        return 'failure'
     }
 
     getLatestHeight = async (): Promise<number> => {
@@ -50,4 +51,3 @@ export class DefaultBlockApi implements BlockApi {
         return this.blocks.get(hashString)
     }
 }
-
