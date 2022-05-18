@@ -20,7 +20,7 @@ export default async function handler(
 
   const latestHeight = await api.getLatestHeight()
   const latest = await api.getLatestBlock()
-  console.log(`block api 'latest'`, latestHeight)
+  console.log(`block api 'latest'`, latestHeight, latest?.hashString())
 
   res.status(200).json({height: latestHeight, block: latest?.encode()})
 }

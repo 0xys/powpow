@@ -54,6 +54,10 @@ test('block with single transaction', () => {
     expect(decodedDest.getMessageUtf8()).toBe(destMessage.toString('utf8'))
 
     expect(decoded.getDifficultyTargetBuffer().toString('hex')).toBe(block.getDifficultyTargetBuffer().toString('hex'))
+
+    const encoded2 = decoded.encodeToHex()
+    const decoded2 = Block.decode(Buffer.from(encoded2, 'hex'))
+    expect(decoded2.hashString()).toBe(block.hashString())
 })
 
 test('block with multiple transactions', () => {
@@ -108,4 +112,11 @@ test('block with multiple transactions', () => {
     }
 
     expect(decoded.getDifficultyTargetBuffer().toString('hex')).toBe(block.getDifficultyTargetBuffer().toString('hex'))
+})
+
+test('decode test', () => {
+    const blob = '00000000000000000000000000000000000000000000000000000000000000000000000000000000ee00000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010346f0ac8cfdb59340a8591f6ab9debebe368a31c22feda3cfd56092d29c481073000000000000271000000000ccc51e73defe9eb876bc35fd20c8f305c87948f5d1ea589988f1891c571577ae2f174d5538379ac743ee62c334e937ed4154b0434b3ea6a6a489ccb3f91e0b290100000009'
+    const decoded = Block.decode(Buffer.from(blob, 'hex'))
+
+    expect(decoded.hashString()).toBe('f4d568d68d9df0d90b31b7f8c3cad98cd8ab469bd4332ac9aee023d62cb2f439')
 })

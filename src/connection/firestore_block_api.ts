@@ -27,8 +27,6 @@ export class FirestoreBlockApi implements BlockApi {
                 const latestHashRef = this.db.collection('latest').doc('hash')
                 const latestHash = await latestHashRef.get()
 
-
-
                 if(!latestHeight.exists) {  // this block is genesis
                     t.set(latestHeightRef, { num: 0 })  // genesis block height is 0.
                     t.set(latestHashRef, { hash: thisBlockHash  })  // genesis block hash
@@ -56,7 +54,7 @@ export class FirestoreBlockApi implements BlockApi {
                     t.update(latestHashRef, { hash: nextLatestHash })
                 }
     
-                t.set(thisBlockRef, block)  // add this block as new block entry.
+                t.set(thisBlockRef, {data: block.encodeToHex()})  // add this block as new block entry.
     
                 return 'success'
             })
@@ -99,7 +97,9 @@ export class FirestoreBlockApi implements BlockApi {
             return undefined
         }
 
-        const ret: Block = data
-        return ret 
+        const ret: {data: string} = data
+        console.log(`getBlockByHash(${hashString})`, ret.data)
+        const decoded = Block.decode(Buffer.from(ret.data, 'hex'))
+        return decoded
     }
 }
