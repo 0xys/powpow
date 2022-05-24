@@ -13,7 +13,6 @@ import { Mempool } from '../types/miner/mempool'
 import { Block } from '../types/blockchain/block'
 import { Miner } from '../types/miner/miner'
 import { Wallet } from '../types/miner/wallet'
-import { Account } from './api/accounts/[address]'
 import { Blockchain } from '../types/blockchain/blockchain'
 import { BlockchainValidator } from '../consensus/blockchain_validator'
 import { TransactionVerifier } from '../consensus/transaction_verifiier'
@@ -21,6 +20,7 @@ import { ConsensusEngine } from '../consensus/consensus_engine'
 import { BlockFactoryComponent, TxError } from './components/blockFactory'
 import { reorg } from '../consensus/reorger'
 import axios from 'axios'
+import { Account } from '../connection/account_api'
 
 // let socket: Socket<DefaultEventsMap, DefaultEventsMap>
 
