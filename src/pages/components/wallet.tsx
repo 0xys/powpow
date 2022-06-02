@@ -1,4 +1,5 @@
 import type { NextPage } from 'next'
+import React from 'react'
 import { useState } from 'react'
 import { Destination, Transaction } from '../../types/blockchain/transaction'
 import { Miner } from '../../types/miner/miner'
@@ -11,7 +12,7 @@ export type FetchedWallet = {
     wallet: Wallet
 }
 
-export const WalletComponent = 
+export const WalletComponent = React.memo(
     (prop: {
         onSend: OnSendHandler,
         wallet: FetchedWallet|undefined,
@@ -89,4 +90,4 @@ export const WalletComponent =
             </button>
         </div>
     </div>
-}
+})

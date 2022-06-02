@@ -291,10 +291,10 @@ const Home: NextPage = () => {
     }
   }
 
-  const onSendHandler = (e: string) => {
+  const onSendHandler = useCallback((e: string) => {
     console.log('broadcast tx:', e)
     socket.emit('send', e)
-  }
+  }, [socket])
 
   const onTransactionAdded = (e: any) => {
     if (!selectedTransaction) {
@@ -341,25 +341,25 @@ const Home: NextPage = () => {
     setSelectedTransaction(undefined)
   }
 
-  const onTransactionRemovedFromFactory = (hash: string) => {
+  const onTransactionRemovedFromFactory = useCallback((hash: string) => {
     const nextHeight = blockchain.blocks.length
-      let prevBlockHash = blockchain.hash()
-      let afterTxs: Transaction[] = []
+    let prevBlockHash = blockchain.hash()
+    let afterTxs: Transaction[] = []
 
-      for (const tx of blockFactory?.getTransactions() ?? []) {
-        if(tx.hashString() != hash){
-          afterTxs.push(tx)
-        }
+    for (const tx of blockFactory?.getTransactions() ?? []) {
+      if(tx.hashString() != hash){
+        afterTxs.push(tx)
       }
+    }
 
-      const success = dryRunTransactions(afterTxs)
-      if (!success) {
-        console.log('error in block factory after removal', success)
-      }
+    const success = dryRunTransactions(afterTxs)
+    if (!success) {
+      console.log('error in block factory after removal', success)
+    }
 
-      const afterBlock = new Block(version, BigInt(nextHeight), prevBlockHash, afterTxs, BigInt(0))
-      setBlockFactory(afterBlock)
-  }
+    const afterBlock = new Block(version, BigInt(nextHeight), prevBlockHash, afterTxs, BigInt(0))
+    setBlockFactory(afterBlock)
+  }, [blockchain, blockFactory])
 
   const onBlockPropagated = (e: any) => {
     if (!minedBlock) {

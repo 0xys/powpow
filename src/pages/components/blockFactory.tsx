@@ -1,3 +1,4 @@
+import React from "react";
 import { useEffect, useMemo } from "react";
 import { Transaction } from "../../types/blockchain/transaction";
 
@@ -8,8 +9,7 @@ export type TxError = {
 
 type RemoveTransaction = (hash: string) => void;
 
-export const BlockFactoryComponent = 
-(prop: {
+export const BlockFactoryComponent = React.memo((prop: {
     transactions: Transaction[],
     txerrors: TxError[],
     height: string,
@@ -44,4 +44,4 @@ export const BlockFactoryComponent =
             </li>
         </div>   
     )
-}
+})
