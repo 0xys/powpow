@@ -21,12 +21,12 @@ export default async function handler(
   const { hash } = req.query
   if (typeof hash === 'string') {
     const block = await api.getBlockByHash(hash)
-    console.log(`get block[${hash}]:`, block?.hashString())
+    //console.log(`get block[${hash}]:`, block?.hashString())
 
     res.status(200).json({height: Number(block?.getHeight()), blockHex: block?.encodeToHex()})
   }else{
     const block = await api.getBlockByHash(hash[0]) // first item
-    console.log(`get block[${hash[0]}]:`, block?.hashString())
+    //console.log(`get block[${hash[0]}]:`, block?.hashString())
 
     res.status(200).json({height: Number(block?.getHeight()), blockHex: block?.encodeToHex()})
   }

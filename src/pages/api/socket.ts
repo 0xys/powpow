@@ -28,7 +28,7 @@ const SocketHandler = (req: any, res: any) => {
 
         io.on('connection', socket => {
             socket.on('send', msg => {
-                socket.broadcast.emit('new-transaction', msg)
+                socket.emit('new-transaction', msg)
             })
 
             socket.on('propagate', async msg => {
