@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { Transaction } from "../../types/blockchain/transaction";
 
 export type TxError = {
@@ -17,15 +17,17 @@ export const BlockFactoryComponent =
 }) => {
     const { transactions, txerrors, height, removeTransaction } = prop;
 
-    let wrappedTxs: {tx: Transaction, message?: string}[] = []
-
-    for (let index = 0; index < transactions.length; index++) {
-        const item = txerrors.find(x => x.index == index)
-        wrappedTxs.push({
-            tx: transactions[index],
-            message: item?.message
-        })
-    }
+    const wrappedTxs = useMemo(() => {
+        let wrappedTxs: {tx: Transaction, message?: string}[] = []
+        for (let index = 0; index < transactions.length; index++) {
+            const item = txerrors.find(x => x.index == index)
+            wrappedTxs.push({
+                tx: transactions[index],
+                message: item?.message
+            })
+        }
+        return wrappedTxs
+    }, [transactions, txerrors])
 
     return (
         <div>
