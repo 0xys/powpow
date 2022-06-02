@@ -3,7 +3,7 @@ import type { NextPage } from 'next'
 import useSWR from 'swr'
 import Head from 'next/head'
 import Image from 'next/image'
-import { useContext, useEffect, useState } from 'react'
+import { useCallback, useContext, useEffect, useState } from 'react'
 import { io, Socket } from 'socket.io-client'
 import { DefaultEventsMap } from 'socket.io/dist/typed-events'
 import { FetchedWallet, WalletComponent } from './components/wallet'
@@ -73,7 +73,7 @@ const Home: NextPage = () => {
     return true
   }
 
-  const dryRunTransactions = (transactions: Transaction[]): boolean => {
+  const dryRunTransactions = useCallback((transactions: Transaction[]): boolean => {
     const error = validator.dryAppendTransactions(blockchain, transactions)
     if(error) {
       console.log(error)
@@ -87,7 +87,7 @@ const Home: NextPage = () => {
       setTxErrors([])
     }
     return true
-  }
+  }, [blockchain, validator])
 
   useEffect(() => {
     if(!miner) {
