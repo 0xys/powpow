@@ -73,7 +73,7 @@ const Home: NextPage = () => {
     return true
   }
 
-  const dryRunTransactions = useCallback((transactions: Transaction[]): boolean => {
+  const dryRunTransactions = (transactions: Transaction[]): boolean => {
     const error = validator.dryAppendTransactions(blockchain, transactions)
     if(error) {
       console.log(error)
@@ -87,7 +87,7 @@ const Home: NextPage = () => {
       setTxErrors([])
     }
     return true
-  }, [blockchain, validator])
+  }
 
   useEffect(() => {
     if(!miner) {
