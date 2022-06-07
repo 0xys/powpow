@@ -7,7 +7,8 @@ export type TxError = {
     message: string,
 }
 
-type RemoveTransaction = (hash: string) => void;
+type RemoveTransaction = (hash: string) => void
+type WrappedTx = { tx: Transaction, message?: string, isCoinbase: boolean }
 
 export const BlockFactoryComponent = React.memo((prop: {
     transactions: Transaction[],
@@ -18,12 +19,14 @@ export const BlockFactoryComponent = React.memo((prop: {
     const { transactions, txerrors, height, removeTransaction } = prop;
 
     const wrappedTxs = useMemo(() => {
-        let wrappedTxs: {tx: Transaction, message?: string}[] = []
+        let wrappedTxs: WrappedTx[] = []
         for (let index = 0; index < transactions.length; index++) {
+            const isCoinbase = transactions[index].isCoinbase()
             const item = txerrors.find(x => x.index == index)
             wrappedTxs.push({
                 tx: transactions[index],
-                message: item?.message
+                message: item?.message,
+                isCoinbase: isCoinbase,
             })
         }
         return wrappedTxs
@@ -37,7 +40,7 @@ export const BlockFactoryComponent = React.memo((prop: {
             <ul>
                 {wrappedTxs.map((tx,j) => (
                     <li key={tx.tx.hashString()}>
-                        {tx.tx.hashString()} {tx.message} <button onClick={() => removeTransaction(tx.tx.hashString())}>x</button>
+                        {tx.tx.hashString()} {tx.message} <button onClick={() => removeTransaction(tx.tx.hashString())} disabled={tx.isCoinbase}>x</button>
                     </li>
                 ))}
             </ul>
