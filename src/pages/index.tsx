@@ -21,6 +21,7 @@ import { BlockFactoryComponent, TxError } from './components/blockFactory'
 import { reorg } from '../consensus/reorger'
 import axios from 'axios'
 import { Account } from '../connection/account_api'
+import { MempoolComponent } from './components/mempool'
 
 // let socket: Socket<DefaultEventsMap, DefaultEventsMap>
 
@@ -279,22 +280,29 @@ const Home: NextPage = () => {
     setSelectedWallet(selected)
   }
 
-  const onMempoolSelectionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    if (!mempool) {
-      return
-    }
-    console.log(e.target.value)
-    const selectedHash: string = e.target.value
-    const {found, tx} = mempool.tryGetTransactionByHashString(selectedHash)
-    if (found){
-      setSelectedTransaction(tx)
-    }
-  }
-
   const onSendHandler = useCallback((e: string) => {
     console.log('broadcast tx:', e)
     socket.emit('send', e)
   }, [socket])
+
+  const removeFromMempool = useCallback((hash: string) => {
+    if(!mempool) {
+      return
+    }
+    mempool.removeTransactionByHashString(hash)
+    const after = new Mempool(mempool.getTransactionsArray())
+    setMempool(after)
+  }, [mempool])
+
+  const selectFromMempool = useCallback((hash: string) => {
+    if(!mempool) {
+      return
+    }
+    const {found, tx} = mempool.tryGetTransactionByHashString(hash)
+    if (found){
+      setSelectedTransaction(tx)
+    }
+  }, [mempool])
 
   const onTransactionAdded = (e: any) => {
     if (!selectedTransaction) {
@@ -400,11 +408,11 @@ const Home: NextPage = () => {
       <br />
       Mempool
       <br />
-      <select onChange={onMempoolSelectionChange} size={10}>
-        {mempool?.getTransactionsArray().map((tx, i) => (
-          <option key={i}>{tx.hashString()}</option>
-        ))}
-      </select>
+      {
+        mempool ? <MempoolComponent mempool={mempool}
+          onRemove={removeFromMempool} onSelect={selectFromMempool} />
+        : <div></div>
+      }
       <br />
       Selected: {selectedTransaction?.hashString()}
       <br />
