@@ -196,7 +196,7 @@ const Home: NextPage = () => {
       const afterBlock = new Block(version, BigInt(nextHeight), prevBlockHash, afterTxs, BigInt(0))
       setBlockFactory(afterBlock)
     }
-  }, [selectedWallet])
+  }, [selectedWallet, blockFactory])
 
   const { data: fetchedAccount, error: fetchError } = useSWR<Account>(selectedWallet ? `api/accounts/${selectedWallet.getAddress()}` : null, fetcher)
   
