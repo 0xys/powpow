@@ -22,6 +22,7 @@ import { reorg } from '../consensus/reorger'
 import axios from 'axios'
 import { Account } from '../connection/account_api'
 import { MempoolComponent } from './components/mempool'
+import { TransactionPreviewComponent } from './components/transaction_preview'
 
 // let socket: Socket<DefaultEventsMap, DefaultEventsMap>
 
@@ -304,7 +305,7 @@ const Home: NextPage = () => {
     }
   }, [mempool])
 
-  const onTransactionAdded = (e: any) => {
+  const addFromSelectedTransaction = useCallback((hash: string) => {
     if (!selectedTransaction) {
       return
     }
@@ -338,16 +339,17 @@ const Home: NextPage = () => {
       setMempool(after)
     }
     setSelectedTransaction(undefined)
-  }
-  const onTransactionDiscarded = (e: any) => {
-    if (!selectedTransaction || !mempool) {
+  }, [blockchain, mempool, blockFactory, selectedTransaction])
+
+  const discardFromMempool = useCallback((hash: string) => {
+    if (!mempool) {
       return
     }
-    mempool.removeTransactionByHashString(selectedTransaction.hashString())
+    mempool.removeTransactionByHashString(hash)
     const after = new Mempool(mempool.getTransactionsArray())
     setMempool(after)
     setSelectedTransaction(undefined)
-  }
+  }, [mempool])
 
   const onTransactionRemovedFromFactory = useCallback((hash: string) => {
     const nextHeight = blockchain.blocks.length
@@ -414,23 +416,11 @@ const Home: NextPage = () => {
         : <div></div>
       }
       <br />
-      Selected: {selectedTransaction?.hashString()}
-      <br />
-      From: {selectedTransaction?.getFromAddressString()}
-      <br />
-      To: {selectedTransaction?.getDests()[0].getAddressString()}
-      <br />
-      Amount: {selectedTransaction?.getDests()[0].getAmount().toString()}
-      <br />
-      Message: {selectedTransaction?.getDests()[0].getMessageUtf8()}
-      <br />
-      <button onClick={onTransactionAdded}>
-        add
-      </button>
-      <button onClick={onTransactionDiscarded}>
-        discard
-      </button>
-      <br />
+      {
+        selectedTransaction ? <TransactionPreviewComponent tx={selectedTransaction}
+        onAdd={addFromSelectedTransaction} onDiscard={discardFromMempool}/>
+        : <div></div>
+      }
       <br />
       <BlockFactoryComponent transactions={blockFactory?.getTransactions()??[]}
         txerrors={txerrors}
