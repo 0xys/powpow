@@ -29,7 +29,7 @@ export const MempoolComponent = React.memo((prop: {
                 {txs.map((tx,j) => (
                     <li key={tx.hashFull}>
                         {tx.hash} {tx.feeRate} {tx.from} {"->"} {tx.to} {tx.amount}
-                        <button onClick={() => onSelect(tx.hashFull)}>add</button>
+                        <button onClick={() => onSelect(tx.hashFull)}>select</button>
                         <button onClick={() => onRemove(tx.hashFull)}>x</button>
                     </li>
                 ))}
