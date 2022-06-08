@@ -1,8 +1,10 @@
-import { Box, VStack, HStack, Input, Button, Divider } from '@chakra-ui/react'
-import { useMemo, useState } from 'react'
+import { Box, VStack, HStack, Input, Button, Divider, Heading, ButtonGroup, IconButton } from '@chakra-ui/react'
+import { AddIcon, CopyIcon } from '@chakra-ui/icons'
+import { useCallback, useMemo, useState } from 'react'
 import crypto from 'crypto'
 import { createHash } from 'crypto';
 import secp256k1 from 'secp256k1'
+import { HexOnelineComponent } from '../components/hexOneline';
 
 
 export default function SignaturePage() {
@@ -12,6 +14,10 @@ export default function SignaturePage() {
     const [signature, setSignature] = useState<Buffer>()
     const [verifyingKey, setVerifyingKey] = useState<Buffer>()
     const [sigValidity, setSigValidity] = useState<boolean>(false)
+
+    const copy = useCallback((text: string) => {
+        navigator.clipboard.writeText(text)
+    }, [])
 
     const onGenKeyPairButtonClicked = () => {
         const priv = crypto.randomBytes(32)
@@ -72,16 +78,18 @@ export default function SignaturePage() {
 
     return <VStack>
         <Divider />
-        <h2>Key</h2>
-        <Button onClick={onGenKeyPairButtonClicked}>
-            Generate Key Pair
-        </Button>
-        <VStack>
-            <h4>Private Key: {Buffer.from(priv ?? []).toString('hex')}</h4>
-            <h4>Public  Key: {Buffer.from(pubkey ?? []).toString('hex')}</h4>
-        </VStack>
+        <Heading>Key</Heading>
+        <HStack>
+            <Button onClick={onGenKeyPairButtonClicked} colorScheme={'blue'}>
+                Generate Key Pair
+            </Button>
+            <VStack align={'start'}>
+                <HexOnelineComponent title='Private Key' hex={priv} copy={copy}/>
+                <HexOnelineComponent title='Public Key' hex={pubkey} copy={copy}/>
+            </VStack>
+        </HStack>
         <Divider />
-        <h2>Sign</h2>
+        <Heading>Sign</Heading>
         <VStack>
             <HStack>
                 <h4>Private Key</h4>
@@ -97,7 +105,7 @@ export default function SignaturePage() {
             <h5>signature: {signature?.toString('hex') ?? ''}</h5>
         </VStack>
         <Divider />
-        <h2>Verify</h2>
+        <Heading>Verify</Heading>
         <VStack>
             <HStack>
                 <h4>Public Key</h4>
