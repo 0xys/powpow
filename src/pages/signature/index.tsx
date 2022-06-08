@@ -94,7 +94,7 @@ export default function SignaturePage() {
             <HStack>
                 <InputGroup size={'sm'}>
                     <InputLeftAddon children='Private Key'/>
-                    <Input type='text' placeholder='0x1234dd...' onChange={(e) => onSigningKeyChanged(e.target.value)} width={'64ch'}/>
+                    <Input type='text' placeholder='0x1234dd...' onChange={(e) => onSigningKeyChanged(e.target.value)} width={'68ch'} fontFamily={'Consolas'}/>
                 </InputGroup>
             </HStack>
             <HStack>
@@ -112,7 +112,7 @@ export default function SignaturePage() {
             <HStack>
                 <InputGroup size={'sm'}>
                     <InputLeftAddon children='Public Key' />
-                    <Input type='text' placeholder='0x1234dd...' onChange={(e) => onVerifingKeyChanged(e.target.value)}  width={'66ch'}/>
+                    <Input type='text' placeholder='0x1234dd...' onChange={(e) => onVerifingKeyChanged(e.target.value)}  width={'70ch'} fontFamily={'Consolas'}/>
                 </InputGroup>
             </HStack>
             <HStack>
