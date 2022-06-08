@@ -16,8 +16,8 @@ export const HexOnelineComponent = React.memo((prop: {
 
     return (
         <ButtonGroup size='sm' isAttached variant='outline'>
-            <Button>{title}</Button>
-            <Button>{hexString}</Button>
+            <Button width={'12ch'}>{title}</Button>
+            <Button width={'66ch'}>{hexString}</Button>
             <IconButton aria-label='copy' icon={<CopyIcon />} onClick={() => copy(hexString)}/>
         </ButtonGroup>
     )

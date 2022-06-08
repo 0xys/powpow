@@ -1,4 +1,4 @@
-import { Box, VStack, HStack, Input, Button, Divider, Heading, ButtonGroup, IconButton } from '@chakra-ui/react'
+import { Box, VStack, HStack, Input, Button, Divider, Heading, ButtonGroup, IconButton, Textarea, InputGroup, InputLeftAddon } from '@chakra-ui/react'
 import { AddIcon, CopyIcon } from '@chakra-ui/icons'
 import { useCallback, useMemo, useState } from 'react'
 import crypto from 'crypto'
@@ -92,12 +92,14 @@ export default function SignaturePage() {
         <Heading>Sign</Heading>
         <VStack>
             <HStack>
-                <h4>Private Key</h4>
-                <Input placeholder='0x1234dd...' onChange={(e) => onSigningKeyChanged(e.target.value)}/>
+                <InputGroup size={'sm'}>
+                    <InputLeftAddon children='Private Key'/>
+                    <Input type='text' placeholder='0x1234dd...' onChange={(e) => onSigningKeyChanged(e.target.value)} width={'64ch'}/>
+                </InputGroup>
             </HStack>
             <HStack>
                 <h4>Message</h4>
-                <Input placeholder='signed message' onChange={(e) => onMessageChange(e.target.value)}/>
+                <Textarea placeholder='signed message' onChange={(e) => onMessageChange(e.target.value)} resize={'vertical'}/>
             </HStack>
             <h5>utf-8: {messageUtf8Str}</h5>
             <h5>sha256ed: {messageHashedStr}</h5>
@@ -108,12 +110,14 @@ export default function SignaturePage() {
         <Heading>Verify</Heading>
         <VStack>
             <HStack>
-                <h4>Public Key</h4>
-                <Input placeholder='0x1234dd...' onChange={(e) => onVerifingKeyChanged(e.target.value)}/>
+                <InputGroup size={'sm'}>
+                    <InputLeftAddon children='Public Key' />
+                    <Input type='text' placeholder='0x1234dd...' onChange={(e) => onVerifingKeyChanged(e.target.value)}  width={'66ch'}/>
+                </InputGroup>
             </HStack>
             <HStack>
                 <h4>Message</h4>
-                <Input placeholder='signed message' onChange={(e) => onMessageChange(e.target.value)}/>
+                <Textarea placeholder='signed message' onChange={(e) => onMessageChange(e.target.value)} resize={'vertical'}/>
             </HStack>
             <h5>utf-8: {messageUtf8Str}</h5>
             <h5>sha256ed: {messageHashedStr}</h5>
