@@ -3,6 +3,8 @@ import { AddIcon, CopyIcon } from '@chakra-ui/icons'
 import { useMemo } from 'react'
 import React from 'react'
 
+export const hexFont = 'Consolas'
+
 export const HexOnelineComponent = React.memo((prop: {
     title: string,
     hex?: Uint8Array,
@@ -17,7 +19,7 @@ export const HexOnelineComponent = React.memo((prop: {
     return (
         <ButtonGroup size='sm' isAttached variant='outline'>
             <Button width={'12ch'}>{title}</Button>
-            <Button width={'68ch'} fontFamily={'Consolas'}>{hexString}</Button>
+            <Button width={'68ch'} fontFamily={hexFont}>{hexString}</Button>
             <IconButton aria-label='copy' icon={<CopyIcon />} onClick={() => copy(hexString)}/>
         </ButtonGroup>
     )

@@ -1,22 +1,32 @@
-import { Box, VStack, HStack, Input, Button, Divider, Heading, ButtonGroup, IconButton, Textarea, InputGroup, InputLeftAddon } from '@chakra-ui/react'
+import { Box, VStack, HStack, Input, Button, Divider, Heading, ButtonGroup, IconButton, Textarea, InputGroup, InputLeftAddon, useToast } from '@chakra-ui/react'
 import { AddIcon, CopyIcon } from '@chakra-ui/icons'
 import { useCallback, useMemo, useState } from 'react'
 import crypto from 'crypto'
 import { createHash } from 'crypto';
 import secp256k1 from 'secp256k1'
-import { HexOnelineComponent } from '../components/hexOneline';
+import { hexFont, HexOnelineComponent } from '../components/hex/hexOneline';
+import { HexOnelineView } from '../components/hex/hexOnelineView';
 
 
 export default function SignaturePage() {
-    const [message, setMessagee] = useState('')
+    const [messageSigned, setMessageSigned] = useState('')
     const [priv, setPrivateKey] = useState<Uint8Array>()
     const [signingKey, setSigningKey] = useState<Buffer>()
     const [signature, setSignature] = useState<Buffer>()
+    const [messageVerified, setMessageVerified] = useState('')
     const [verifyingKey, setVerifyingKey] = useState<Buffer>()
     const [sigValidity, setSigValidity] = useState<boolean>(false)
 
+    const toast = useToast()
+
     const copy = useCallback((text: string) => {
         navigator.clipboard.writeText(text)
+        toast({
+            title: 'Copied!',
+            status: 'info',
+            duration: 750,
+            isClosable: true,
+        })
     }, [])
 
     const onGenKeyPairButtonClicked = () => {
@@ -37,19 +47,19 @@ export default function SignaturePage() {
             setSigningKey(Buffer.from(m, 'hex'))
         }
     }
-    const onMessageChange = (m: string) => {
-        setMessagee(m)
+    const onSignedMessageChanged = (m: string) => {
+        setMessageSigned(m)
     }
-    const [messageUtf8Str, messageHashedStr, messageHashed] = useMemo(() => {
-        const utf8 = Buffer.from(message, 'utf8')
+    const [, , signedMessageHashed] = useMemo(() => {
+        const utf8 = Buffer.from(messageSigned, 'utf8')
         const hashed = createHash('sha256').update(utf8).digest()
         return [utf8.toString('hex'), hashed.toString('hex'), hashed]
-    }, [message])
+    }, [messageSigned])
     const onSignClicked = () => {
         if (!signingKey) {
             return
         }
-        const sig = secp256k1.ecdsaSign(messageHashed, signingKey)
+        const sig = secp256k1.ecdsaSign(signedMessageHashed, signingKey)
         setSignature(Buffer.from(sig.signature))
     }
 
@@ -67,12 +77,20 @@ export default function SignaturePage() {
             setSignature(Buffer.from(m, 'hex'))
         }
     }
+    const onVerifiedMessageChanged = (m: string) => {
+        setMessageVerified(m)
+    }
+    const [, , verifiedMessageHashed] = useMemo(() => {
+        const utf8 = Buffer.from(messageVerified, 'utf8')
+        const hashed = createHash('sha256').update(utf8).digest()
+        return [utf8.toString('hex'), hashed.toString('hex'), hashed]
+    }, [messageVerified])
     const onVerifyClicked = () => {
         if (!verifyingKey || !signature) {
             return
         }
 
-        const ok = secp256k1.ecdsaVerify(signature, messageHashed, verifyingKey)
+        const ok = secp256k1.ecdsaVerify(signature, verifiedMessageHashed, verifyingKey)
         setSigValidity(ok)
     }
 
@@ -91,42 +109,38 @@ export default function SignaturePage() {
         <Divider />
         <Heading>Sign</Heading>
         <VStack>
-            <HStack>
-                <InputGroup size={'sm'}>
-                    <InputLeftAddon children='Private Key'/>
-                    <Input type='text' placeholder='0x1234dd...' onChange={(e) => onSigningKeyChanged(e.target.value)} width={'68ch'} fontFamily={'Consolas'}/>
-                </InputGroup>
-            </HStack>
-            <HStack>
-                <h4>Message</h4>
-                <Textarea placeholder='signed message' onChange={(e) => onMessageChange(e.target.value)} resize={'vertical'}/>
-            </HStack>
-            <h5>utf-8: {messageUtf8Str}</h5>
-            <h5>sha256ed: {messageHashedStr}</h5>
-            <Button onClick={onSignClicked}>Sign</Button>
-            <h5>signature: {signature?.toString('hex') ?? ''}</h5>
+            <InputGroup size={'sm'}>
+                <InputLeftAddon children='Private Key' width={'12ch'}/>
+                <Input type='text' placeholder='0x1234dd...' onChange={(e) => onSigningKeyChanged(e.target.value)} width={'68ch'} fontFamily={hexFont}/>
+            </InputGroup>
+            <InputGroup size={'sm'}>
+                <InputLeftAddon children='Message' width={'12ch'}/>
+                <Textarea placeholder='signed message' onChange={(e) => onSignedMessageChanged(e.target.value)} resize={'vertical'} width={'68ch'} fontFamily={hexFont}/>
+            </InputGroup>
+            <HexOnelineView title={'SHA256'} hex={signedMessageHashed} copy={copy} size={68}/>
+            <Button onClick={onSignClicked} colorScheme={'blue'}>Sign</Button>
+            <InputGroup size={'sm'}>
+                <InputLeftAddon children='Signature' width={'12ch'}/>
+                <Textarea width={'68ch'} value={signature?.toString('hex') ?? ''} fontFamily={hexFont}/>
+            </InputGroup>
         </VStack>
         <Divider />
         <Heading>Verify</Heading>
         <VStack>
-            <HStack>
-                <InputGroup size={'sm'}>
-                    <InputLeftAddon children='Public Key' />
-                    <Input type='text' placeholder='0x1234dd...' onChange={(e) => onVerifingKeyChanged(e.target.value)}  width={'70ch'} fontFamily={'Consolas'}/>
-                </InputGroup>
-            </HStack>
-            <HStack>
-                <h4>Message</h4>
-                <Textarea placeholder='signed message' onChange={(e) => onMessageChange(e.target.value)} resize={'vertical'}/>
-            </HStack>
-            <h5>utf-8: {messageUtf8Str}</h5>
-            <h5>sha256ed: {messageHashedStr}</h5>
-            <HStack>
-                <h4>Signature</h4>
-                <Input placeholder='signed message' onChange={(e) => onSignatureChanged(e.target.value)}/>
-            </HStack>
-
-            <Button onClick={onVerifyClicked}>Verify</Button>
+            <InputGroup size={'sm'}>
+                <InputLeftAddon children='Public Key' width={'12ch'}/>
+                <Input type='text' placeholder='0x1234dd...' onChange={(e) => onVerifingKeyChanged(e.target.value)}  width={'70ch'} fontFamily={hexFont}/>
+            </InputGroup>
+            <InputGroup size={'sm'}>
+                <InputLeftAddon children='Message' width={'12ch'}/>
+                <Textarea placeholder='signed message' onChange={(e) => onVerifiedMessageChanged(e.target.value)} resize={'vertical'} width={'70ch'} fontFamily={hexFont}/>
+            </InputGroup>
+            <HexOnelineView title={'SHA256'} hex={verifiedMessageHashed} copy={copy} size={70}/>
+            <InputGroup size={'sm'}>
+                <InputLeftAddon children='Signature' width={'12ch'}/>
+                <Textarea placeholder='0x1234...' onChange={(e) => onSignatureChanged(e.target.value)} resize={'vertical'} width={'70ch'} fontFamily={hexFont}/>
+            </InputGroup>
+            <Button onClick={onVerifyClicked} colorScheme={'blue'}>Verify</Button>
             <h5>ok? {sigValidity ? 'YES':'NO'}</h5>
         </VStack>
     </VStack>
