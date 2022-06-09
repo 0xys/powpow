@@ -133,7 +133,7 @@ export default function SignaturePage() {
             <Button onClick={onSignClicked} colorScheme={'blue'}>Sign</Button>
             <InputGroup size={'sm'}>
                 <InputLeftAddon children='Signature' width={'12ch'}/>
-                <Textarea width={'68ch'} value={signature?.toString('hex') ?? ''} fontFamily={hexFont}/>
+                <Textarea width={'68ch'} value={signature?.toString('hex') ?? ''} fontFamily={hexFont} readOnly={true}/>
             </InputGroup>
         </VStack>
         <Divider />
