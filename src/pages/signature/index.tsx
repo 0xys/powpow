@@ -1,4 +1,4 @@
-import { Box, VStack, HStack, Input, Button, Divider, Heading, ButtonGroup, IconButton, Textarea, InputGroup, InputLeftAddon, useToast } from '@chakra-ui/react'
+import { Box, VStack, HStack, Input, Button, Divider, Heading, ButtonGroup, IconButton, Textarea, InputGroup, InputLeftAddon, useToast, Alert, AlertIcon, AlertTitle } from '@chakra-ui/react'
 import { AddIcon, CopyIcon } from '@chakra-ui/icons'
 import { useCallback, useMemo, useState } from 'react'
 import crypto from 'crypto'
@@ -7,6 +7,7 @@ import secp256k1 from 'secp256k1'
 import { hexFont, HexOnelineComponent } from '../components/hex/hexOneline';
 import { HexOnelineView } from '../components/hex/hexOnelineView';
 
+type SignatureVerificationResult = 'empty' | 'valid' | 'invalid'
 
 export default function SignaturePage() {
     const [messageSigned, setMessageSigned] = useState('')
@@ -15,7 +16,7 @@ export default function SignaturePage() {
     const [signature, setSignature] = useState<Buffer>()
     const [messageVerified, setMessageVerified] = useState('')
     const [verifyingKey, setVerifyingKey] = useState<Buffer>()
-    const [sigValidity, setSigValidity] = useState<boolean>(false)
+    const [sigValidity, setSigValidity] = useState<SignatureVerificationResult>('empty')
 
     const toast = useToast()
 
@@ -91,8 +92,19 @@ export default function SignaturePage() {
         }
 
         const ok = secp256k1.ecdsaVerify(signature, verifiedMessageHashed, verifyingKey)
-        setSigValidity(ok)
+        setSigValidity(ok ? 'valid' : 'invalid')
     }
+
+    const sigResult = useMemo(() => {
+        if (sigValidity == 'empty') {
+            return <div></div>
+        }
+        return (
+            <Alert status={sigValidity == 'valid'? 'success':'error'}>
+                <AlertIcon />
+                <AlertTitle>{sigValidity == 'valid'? 'Valid Signature':'Invalid Signature'}</AlertTitle>
+            </Alert>)
+    }, [sigValidity])
 
     return <VStack>
         <Divider />
@@ -141,7 +153,8 @@ export default function SignaturePage() {
                 <Textarea placeholder='0x1234...' onChange={(e) => onSignatureChanged(e.target.value)} resize={'vertical'} width={'70ch'} fontFamily={hexFont}/>
             </InputGroup>
             <Button onClick={onVerifyClicked} colorScheme={'blue'}>Verify</Button>
-            <h5>ok? {sigValidity ? 'YES':'NO'}</h5>
+            {sigResult}
         </VStack>
+        <Divider />
     </VStack>
 }
