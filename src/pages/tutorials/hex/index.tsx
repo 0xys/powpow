@@ -1,38 +1,65 @@
 import { CopyIcon } from "@chakra-ui/icons";
-import { HStack, IconButton, Input, InputGroup, InputLeftAddon, Tooltip, VStack } from "@chakra-ui/react";
+import { HStack, IconButton, Input, Text, InputGroup, InputLeftAddon, Tooltip, VStack } from "@chakra-ui/react";
 import { toBigIntBE, toBufferBE } from "bigint-buffer";
 import { useMemo, useState } from "react";
 import { hexFont } from "../../components/hex/hexOneline";
 
-export default function HexPage() {
-  const [num, setNum] = useState<bigint>(BigInt(0))
+const regex = new RegExp(`^(0x)?([0-9A-Fa-f][0-9A-Fa-f])*$`)
 
-  const onEdit = (m: string, dh: HexOrDecimal) => {
-    if (dh == 'decimal') {
-      setNum(BigInt(m))
-    } else {
-      const num = toBigIntBE(Buffer.from(m, 'hex'))
-      setNum(num)
+const log16 = (n: number) => {
+  return Math.log(n)/Math.log(256)
+}
+
+export default function HexPage() {
+  const [decimalNum, setDecimalNum] = useState<bigint>(BigInt(0))
+  const [hexNum, setHexNum] = useState<Buffer>()
+  const [err, setErr] = useState('')
+
+  const onEditDecimal = (m: string) => {
+    setDecimalNum(BigInt(m))
+  }
+  const bufStr = useMemo(() => {
+    let numOfOctet
+    if (decimalNum < 256) {
+      numOfOctet = 1
+    }else{
+      numOfOctet = log16(Number(decimalNum)) + 1
+    }
+    return toBufferBE(decimalNum, numOfOctet).toString('hex')
+  }, [decimalNum])
+
+  const onEditHex = (value: string) => {
+    if (regex.test(value)) {
+      if(value.startsWith('0x')) {
+        setHexNum(Buffer.from(value.substring(2), 'hex'))
+      }else{
+        setHexNum(Buffer.from(value, 'hex'))
+      }
+      setErr('')
+    }else{
+      setErr('not hex')
     }
   }
-
-  const buf = useMemo(() => {
-    return toBufferBE(num, 12)
-  }, [num])
+  const decStr = useMemo(() => {
+    if (hexNum) {
+      return toBigIntBE(hexNum).toString()
+    }else{
+      return BigInt(0).toString()
+    }
+  }, [hexNum])
 
   return (
     <VStack>
-      <DecimalInput data={num} onEdit={onEdit} />
-      <HexInput data={buf} onEdit={onEdit} />
+      <DecimalInput onEdit={onEditDecimal} />
+      <Text>{bufStr}</Text>
+      <HexInput onEdit={onEditHex} />
+      <Text>{decStr}</Text>
     </VStack>
   )
 }
 
-type HexOrDecimal = 'decimal' | 'hex'
-
 const DecimalInput = (prop: {
-  data: BigInt,
-  onEdit: (m: string, dh: HexOrDecimal) => void,
+  onEdit: (m: string) => void,
 }) => {
 
   return (
@@ -41,20 +68,15 @@ const DecimalInput = (prop: {
         <Tooltip label='10進数'>
           <InputLeftAddon children='10進数' width={'12ch'}/>
         </Tooltip>
-        <Input type='number' value={prop.data.toString()} width={'70ch'} fontFamily={hexFont} onChange={e => prop.onEdit(e.target.value, 'decimal')}/>
+        <Input type='number' width={'70ch'} fontFamily={hexFont} onChange={e => prop.onEdit(e.target.value)}/>
       </InputGroup>
     </HStack>
   )
 }
 
 const HexInput = (prop: {
-  data: Buffer,
-  onEdit: (m: string, di: HexOrDecimal) => void,
+  onEdit: (m: string) => void,
 }) => {
-
-  const hex = useMemo(() => {
-    return prop.data.toString('hex')
-  },[prop.data])
 
   return (
     <HStack>
@@ -62,7 +84,7 @@ const HexInput = (prop: {
         <Tooltip label='16進数'>
           <InputLeftAddon children='16進数' width={'12ch'}/>
         </Tooltip>
-        <Input type='text' value={hex} width={'70ch'} fontFamily={hexFont} onChange={e => prop.onEdit(e.target.value, 'hex')}/>
+        <Input type='text' width={'70ch'} fontFamily={hexFont} onChange={e => prop.onEdit(e.target.value)}/>
       </InputGroup>
     </HStack>
   )
