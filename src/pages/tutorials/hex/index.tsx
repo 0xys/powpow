@@ -19,13 +19,18 @@ export default function HexPage() {
     setDecimalNum(BigInt(m))
   }
   const bufStr = useMemo(() => {
-    let numOfOctet
-    if (decimalNum < 256) {
-      numOfOctet = 1
+    if (decimalNum <= 0) {
+      return '00'
     }else{
-      numOfOctet = log16(Number(decimalNum)) + 1
+      const numOfOctet = log16(Number(decimalNum)) + 1
+  
+      // if (decimalNum < 256) {
+      //   numOfOctet = 1
+      // }else{
+      //   numOfOctet = log16(Number(decimalNum)) + 1
+      // }
+      return toBufferBE(decimalNum, numOfOctet).toString('hex')
     }
-    return toBufferBE(decimalNum, numOfOctet).toString('hex')
   }, [decimalNum])
 
   const onEditHex = (value: string) => {
