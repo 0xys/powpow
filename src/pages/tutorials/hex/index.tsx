@@ -23,12 +23,6 @@ export default function HexPage() {
       return '00'
     }else{
       const numOfOctet = log16(Number(decimalNum)) + 1
-  
-      // if (decimalNum < 256) {
-      //   numOfOctet = 1
-      // }else{
-      //   numOfOctet = log16(Number(decimalNum)) + 1
-      // }
       return toBufferBE(decimalNum, numOfOctet).toString('hex')
     }
   }, [decimalNum])
