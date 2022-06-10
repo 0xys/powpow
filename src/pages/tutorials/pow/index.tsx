@@ -3,9 +3,9 @@ import { AddIcon, CopyIcon } from '@chakra-ui/icons'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import crypto from 'crypto'
 import { createHash } from 'crypto';
-import { hexFont } from '../components/hex/hexOneline';
-import { HexOnelineView } from '../components/hex/hexOnelineView';
-import { BlockHeader } from '../../types/blockchain/blockHeader';
+import { hexFont } from '../../components/hex/hexOneline';
+import { HexOnelineView } from '../../components/hex/hexOnelineView';
+import { BlockHeader } from '../../../types/blockchain/blockHeader';
 import React from 'react';
 
 const Octet = (prop: {

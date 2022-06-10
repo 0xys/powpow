@@ -14,10 +14,19 @@ function MyApp({ Component, pageProps }: AppProps) {
               <Link href="/">Home</Link>
             </li>
             <li>
-              <Link href="/signature">Signature</Link>
+              <Link href="/tutorials/hex">Hex</Link>
             </li>
             <li>
-              <Link href="/pow">PoW</Link>
+              <Link href="/tutorials/hash">Hash</Link>
+            </li>
+            <li>
+              <Link href="/tutorials/signature">Signature</Link>
+            </li>
+            <li>
+              <Link href="/tutorials/transaction">Transaction</Link>
+            </li>
+            <li>
+              <Link href="/tutorials/pow">PoW</Link>
             </li>
           </ul>
         </nav>
