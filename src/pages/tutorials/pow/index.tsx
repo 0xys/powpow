@@ -7,6 +7,7 @@ import { hexFont } from '../../components/hex/hexOneline';
 import { HexOnelineView } from '../../components/hex/hexOnelineView';
 import { BlockHeader } from '../../../types/blockchain/blockHeader';
 import React from 'react';
+import { toBigIntBE } from 'bigint-buffer';
 
 const Octet = (prop: {
   index: number,
@@ -27,11 +28,15 @@ const Octet = (prop: {
 
 const defaultBlockHeader = new BlockHeader(BigInt(1), BigInt(0), crypto.randomBytes(32), crypto.randomBytes(32), BigInt(0))
 
+type MiningStatus = 'not_ready' | 'ready' | 'mining' | 'mined'
+
 export default function Pow() {
   const [selectionArray, setSelectionArray] = useState<boolean[]>()
   const [label, setLabel] = useState('')
   const [selectedBytes, setSelectedBytes] = useState<Uint8Array>()
   const [blockHeader, setBlockHeader] = useState<BlockHeader>()
+  const [miningStatus, setMiningStatus] = useState<MiningStatus>('not_ready')
+  const [headerError, setHeaderError] = useState(0)
 
   const toast = useToast()
 
@@ -154,13 +159,69 @@ export default function Pow() {
     if (!blockHeader) {
       return
     }
-    blockHeader.setNonce(b)
+    blockHeader.setNonceBuffer(b)
     setBlockHeader({...blockHeader})
   }
 
   const hash = useMemo(() => {
     return blockHeader?.hash()
   }, [blockHeader])
+
+  useEffect(() => {
+    const mine = async () => {
+      if (!blockHeader) {
+        return
+      }
+      let nonce = blockHeader.getNonce()
+      while(true) {
+        console.log(miningStatus, nonce)
+        blockHeader.difficultyTarget
+        nonce = nonce + BigInt(1)
+        blockHeader.setNonce(nonce)
+        setBlockHeader({...blockHeader})
+  
+        await new Promise(resolve => setTimeout(resolve, 100))
+  
+        if (checkIfMined(blockHeader)) {
+          setMiningStatus('mined')
+          break
+        }
+      }
+    }
+    if (miningStatus == 'mining') {
+      mine()
+    }
+  }, [miningStatus])
+
+  const isMined = useMemo(() => {
+    if (!blockHeader) {
+      return false
+    }
+    return checkIfMined(blockHeader)
+  }, [blockHeader])
+
+  useEffect(() => {
+    if (!blockHeader) {
+      return
+    }
+    if (headerError == 0) {
+      if (checkIfMined(blockHeader)) {
+        setMiningStatus('mined')
+      }else{
+        if(miningStatus == 'mining') {
+          return // do nothing
+        }else{
+          setMiningStatus('ready')
+        }
+      }
+    }else{
+      setMiningStatus('not_ready')
+    }
+  }, [blockHeader, headerError])
+
+  const mineButtonText = useMemo(() => {
+    return getMineButtonText(miningStatus)
+  }, [miningStatus])
 
   return (
     <VStack>
@@ -176,10 +237,29 @@ export default function Pow() {
       <Center>
         <HexOnelineView title={'Block Hash'} hex={hash} size={68} copy={copy} titleLength={20}/>
       </Center>
+      <Button disabled={miningStatus != 'ready'} onClick={() => setMiningStatus('mining')}>{mineButtonText}</Button>
+      <Text>mined: {isMined ? 'YES' : 'NO'}</Text>
     </VStack>
   )
 }
 
+const checkIfMined = (blockHeader: BlockHeader): boolean => {
+  const work = toBigIntBE(blockHeader.hash().slice(0, 4))
+  return work <= blockHeader.getDifficultyTarget()
+}
+
+const getMineButtonText = (miningStatus: MiningStatus): string => {
+  switch (miningStatus) {
+    case 'not_ready':
+      return 'Not Ready'
+    case 'ready':
+      return "Let's Mine!"
+    case 'mining':
+      return 'Mining...'
+    case 'mined':
+      return 'Mined!'
+  }
+}
 
 const HexOnelineEdit = React.memo((prop: {
   title: string,

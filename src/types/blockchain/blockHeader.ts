@@ -26,7 +26,7 @@ export class BlockHeader {
             this.difficultyTarget = difficultyTarget
         }else{
             //  initial difficulty
-            this.difficultyTarget = toBigIntBE(Buffer.from([0xee, 0x00, 0x00, 0x00]))
+            this.difficultyTarget = toBigIntBE(Buffer.from([0x0f, 0xff, 0xff, 0xff]))
         }
     }
 
@@ -89,8 +89,11 @@ export class BlockHeader {
     getNonceBuffer = (): Buffer => {
         return toBufferBE(this.getNonce(), 4)
     }
-    setNonce = (nonce: Buffer) => {
+    setNonceBuffer = (nonce: Buffer) => {
         this.nonce = toBigIntBE(nonce)
+    }
+    setNonce = (nonce: bigint) => {
+        this.nonce = nonce
     }
 
     encode = (): Buffer => {
