@@ -107,8 +107,11 @@ export default function SignaturePage() {
   }, [sigValidity])
 
   return (<VStack>
+    <Heading>
+      電子署名
+    </Heading>
     <Divider />
-    <Heading>Key</Heading>
+    <Heading>鍵生成</Heading>
     <HStack>
       <Button onClick={onGenKeyPairButtonClicked} colorScheme={'blue'}>
         Generate Key Pair
@@ -119,7 +122,7 @@ export default function SignaturePage() {
       </VStack>
     </HStack>
     <Divider />
-    <Heading>Sign</Heading>
+    <Heading>署名アルゴリズム</Heading>
     <VStack>
       <InputGroup size={'sm'}>
         <InputLeftAddon children='Private Key' width={'12ch'}/>
@@ -137,7 +140,7 @@ export default function SignaturePage() {
       </InputGroup>
     </VStack>
     <Divider />
-    <Heading>Verify</Heading>
+    <Heading>検証アルゴリズム</Heading>
     <VStack>
       <InputGroup size={'sm'}>
         <InputLeftAddon children='Public Key' width={'12ch'}/>
