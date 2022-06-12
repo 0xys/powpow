@@ -26,7 +26,7 @@ export class BlockHeader {
             this.difficultyTarget = difficultyTarget
         }else{
             //  initial difficulty
-            this.difficultyTarget = toBigIntBE(Buffer.from([0x0f, 0xff, 0xff, 0xff]))
+            this.difficultyTarget = toBigIntBE(Buffer.from([0x00, 0xff, 0xff, 0xff]))
         }
     }
 

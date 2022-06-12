@@ -99,7 +99,7 @@ const DecHexTable = (prop: {
       </Thead>
       <Tbody>
         {prop.array.map(x => {
-          return <Tr>
+          return <Tr key={x}>
             <Td>{x}</Td>
             <Td>{x.toString(16)}</Td>
           </Tr>
