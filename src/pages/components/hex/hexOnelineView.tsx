@@ -26,7 +26,7 @@ export const HexOnelineView = React.memo((prop: {
                 fontFamily={hexFont}
                 isReadOnly={true}
                 variant='filled'
-                defaultValue={hexString}/>
+                value={hexString}/>
         </InputGroup>
     )
 })
