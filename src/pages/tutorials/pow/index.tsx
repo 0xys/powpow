@@ -36,7 +36,7 @@ export default function Pow() {
   const [selectedBytes, setSelectedBytes] = useState<Uint8Array>()
   const [blockHeader, setBlockHeader] = useState<BlockHeader>()
   const [miningStatus, setMiningStatus] = useState<MiningStatus>('not_ready')
-  const [headerError, setHeaderError] = useState(0)
+  const [headerError, setHeaderError] = useState<number[]>([0,0,0,0,0,0])
 
   const toast = useToast()
 
@@ -173,25 +173,24 @@ export default function Pow() {
         return
       }
       let nonce = blockHeader.getNonce()
-      while(true) {
-        console.log(miningStatus, nonce)
-        blockHeader.difficultyTarget
-        nonce = nonce + BigInt(1)
-        blockHeader.setNonce(nonce)
-        setBlockHeader({...blockHeader})
-  
-        await new Promise(resolve => setTimeout(resolve, 100))
-  
-        if (checkIfMined(blockHeader)) {
-          setMiningStatus('mined')
-          break
-        }
-      }
+      nonce = nonce + BigInt(1)
+      console.log(miningStatus, nonce)
+      blockHeader.setNonce(nonce)
+
+      await new Promise(resolve => setTimeout(resolve, 100))
+      setBlockHeader({...blockHeader})      
+    }
+    if (!blockHeader) {
+      return
     }
     if (miningStatus == 'mining') {
+      if (checkIfMined(blockHeader)) {
+        setMiningStatus('mined')
+        return
+      }
       mine()
     }
-  }, [miningStatus])
+  }, [blockHeader, miningStatus])
 
   const isMined = useMemo(() => {
     if (!blockHeader) {
@@ -204,7 +203,7 @@ export default function Pow() {
     if (!blockHeader) {
       return
     }
-    if (headerError == 0) {
+    if (headerError.every(x => x == 0)) {
       if (checkIfMined(blockHeader)) {
         setMiningStatus('mined')
       }else{
@@ -223,22 +222,44 @@ export default function Pow() {
     return getMineButtonText(miningStatus)
   }, [miningStatus])
 
+  const onError = (index: number) => (anyError: boolean) => {
+    if (anyError) {
+      headerError[index] = 1
+      setHeaderError([... headerError])
+    }else{
+      headerError[index] = 0
+      setHeaderError([... headerError])
+    }
+  }
+
   return (
     <VStack>
-      <HexOnelineEdit title='Version' hex={blockHeader?.getVersionBuffer()} byteLength={4} hexLength={68} setValue={setVersion} focused={label=='version'}/>
-      <HexOnelineEdit title='Height' hex={blockHeader?.getHeightBuffer()} byteLength={4} hexLength={68} setValue={setHeight} focused={label=='height'}/>
-      <HexOnelineEdit title='Prev Block Hash' hex={blockHeader?.getPrevBlockHash()} byteLength={32} hexLength={68} setValue={setPrevBlockHash} focused={label=='prevBlockHash'}/>
-      <HexOnelineEdit title='Difficulty' hex={blockHeader?.getDifficultyTargetBuffer()} byteLength={4} hexLength={68} setValue={setDifficultyTarget} focused={label=='diffTarget'}/>
-      <HexOnelineEdit title='Merkle Root' hex={blockHeader?.getMerkleRoot()} byteLength={32} hexLength={68} setValue={setMerkleRoot} focused={label=='merkleRoot'}/>
-      <HexOnelineEdit title='Nonce' hex={blockHeader?.getNonceBuffer()} byteLength={4} hexLength={68} setValue={setNonce} focused={label=='nonce'}/>
+      <Heading>
+        マイニング
+      </Heading>
+      <HexOnelineEdit title='Version' hex={blockHeader?.getVersionBuffer()} byteLength={4} hexLength={68} setValue={setVersion} focused={label=='version'} anyError={onError(0)}/>
+      <HexOnelineEdit title='Height' hex={blockHeader?.getHeightBuffer()} byteLength={4} hexLength={68} setValue={setHeight} focused={label=='height'} anyError={onError(1)}/>
+      <HexOnelineEdit title='Prev Block Hash' hex={blockHeader?.getPrevBlockHash()} byteLength={32} hexLength={68} setValue={setPrevBlockHash} focused={label=='prevBlockHash'} anyError={onError(2)}/>
+      <HexOnelineEdit title='Difficulty' hex={blockHeader?.getDifficultyTargetBuffer()} byteLength={4} hexLength={68} setValue={setDifficultyTarget} focused={label=='diffTarget'} anyError={onError(3)}/>
+      <HexOnelineEdit title='Merkle Root' hex={blockHeader?.getMerkleRoot()} byteLength={32} hexLength={68} setValue={setMerkleRoot} focused={label=='merkleRoot'} anyError={onError(4)}/>
+      {miningStatus == 'mining' ? (
+        <HexOnelineCannotEdit title='Nonce' hex={blockHeader?.getNonceBuffer()} hexLength={68} focused={label=='nonce'} />
+      ) : (
+        <HexOnelineEdit title='Nonce' hex={blockHeader?.getNonceBuffer()} byteLength={4} hexLength={68} setValue={setNonce} focused={label=='nonce'} anyError={onError(5)}/>
+      )}
       <SimpleGrid columns={16} onMouseLeave={e => onLeave()}>
         {hexArray.map((v, i) => <Octet index={i} hex={v} selected={!!selectionArray? selectionArray[i]: false} onHover={onHover} key={i}/>)}
       </SimpleGrid>
       <Center>
         <HexOnelineView title={'Block Hash'} hex={hash} size={68} copy={copy} titleLength={20}/>
       </Center>
-      <Button disabled={miningStatus != 'ready'} onClick={() => setMiningStatus('mining')}>{mineButtonText}</Button>
-      <Text>mined: {isMined ? 'YES' : 'NO'}</Text>
+      <Button disabled={ miningStatus == 'not_ready' || miningStatus == 'mined' } colorScheme='teal' onClick={() => {
+        if(miningStatus == 'ready') {
+          setMiningStatus('mining')
+        }else if (miningStatus == 'mining'){
+          setMiningStatus('ready')  // cancel mining
+        }
+      }} isLoading={miningStatus=='mining'} loadingText='Mining...' spinnerPlacement='start'>{mineButtonText}</Button>
     </VStack>
   )
 }
@@ -269,6 +290,7 @@ const HexOnelineEdit = React.memo((prop: {
   titleLength?: number,
   focused: boolean,
   setValue: (buf: Buffer) => void,
+  anyError: (exist: boolean) => void,
 }) => {
   const { title, hex, hexLength, titleLength } = prop
 
@@ -291,6 +313,7 @@ const HexOnelineEdit = React.memo((prop: {
       }else{
         prop.setValue(Buffer.from(value, 'hex'))
       }
+      prop.anyError(false)
       setErr('')
     }else{
       if(value.startsWith('0x')) {
@@ -306,6 +329,7 @@ const HexOnelineEdit = React.memo((prop: {
           setErr('wrong length')
         }
       }
+      prop.anyError(true)
       prop.setValue(Buffer.alloc(prop.byteLength).fill(0))
     }
   }
@@ -324,6 +348,35 @@ const HexOnelineEdit = React.memo((prop: {
           errorBorderColor='crimson'/>
       </InputGroup>
       <Text fontSize='sm' color='tomato' display={err?'block':'none'}>{err}</Text>
+    </HStack>
+  )
+})
+
+const HexOnelineCannotEdit = React.memo((prop: {
+  title: string,
+  hex?: Uint8Array,
+  hexLength?: number,
+  titleLength?: number,
+  focused: boolean,
+}) => {
+  const { title, hex, hexLength, titleLength } = prop
+
+  const hexString = useMemo(() => {
+      return Buffer.from(hex ?? []).toString('hex')
+  }, [prop.hex])
+
+  return (
+    <HStack>
+      <InputGroup size='sm' variant='outline'>
+        <InputLeftAddon width={`${titleLength ?? 20}ch`} children={title} fontWeight={prop.focused?'extrabold':'normal'} />
+        <Input
+          width={`${hexLength ?? hexString.length}ch`}
+          fontFamily={hexFont}
+          variant='filled'
+          value={hexString}
+          isReadOnly={true}
+          />
+      </InputGroup>
     </HStack>
   )
 })
