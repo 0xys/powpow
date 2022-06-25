@@ -1,4 +1,5 @@
-import { Box, VStack, HStack, Input, Button, Divider, Heading, ButtonGroup, IconButton, Textarea, InputGroup, InputLeftAddon, useToast, Alert, AlertIcon, AlertTitle } from '@chakra-ui/react'
+import { Box, VStack, HStack, Input, Button, Divider, Heading, ButtonGroup, IconButton, Textarea, InputGroup, InputLeftAddon, useToast, Alert, AlertIcon, AlertTitle, Text } from '@chakra-ui/react'
+import { Image } from '@chakra-ui/react'
 import { AddIcon, CopyIcon } from '@chakra-ui/icons'
 import { useCallback, useMemo, useState } from 'react'
 import crypto from 'crypto'
@@ -6,6 +7,8 @@ import { createHash } from 'crypto';
 import secp256k1 from 'secp256k1'
 import { hexFont, HexOnelineComponent } from '../../components/hex/hexOneline';
 import { HexOnelineView } from '../../components/hex/hexOnelineView';
+
+import text from '../../../texts/signature.json'
 
 type SignatureVerificationResult = 'empty' | 'valid' | 'invalid'
 
@@ -110,32 +113,67 @@ export default function SignaturePage() {
     <Heading>
       電子署名
     </Heading>
+    <Text>
+      {text[1]}
+    </Text>
+    <Text>
+      {text[2]}
+    </Text>
+    <Text>
+      {text[3]}
+    </Text>
+    <Text>
+      {text[4]}
+    </Text>
+    <Text>
+      {text[5]}
+    </Text>
+    <Text>
+      {text[6]}
+    </Text>
+    <Text>
+      {text[7]}
+    </Text>
+    <HStack>
+      <VStack>
+        <Image src='/img/hanko.png' alt='hanko flow' />
+        <Text>印鑑を使った署名方法</Text>
+      </VStack>
+      <Box boxSize={'40'}/>
+      <VStack>
+        <Image src='/img/sig.png' alt='sig flow' />
+        <Text>署名アルゴリズムを使った署名方法</Text>
+      </VStack>
+    </HStack>
     <Divider />
     <Heading>鍵生成</Heading>
+    <Text>
+      {text['keygen']}
+    </Text>
     <HStack>
       <Button onClick={onGenKeyPairButtonClicked} colorScheme={'blue'}>
         Generate Key Pair
       </Button>
       <VStack align={'start'}>
-        <HexOnelineComponent title='Private Key' hex={priv} copy={copy}/>
-        <HexOnelineComponent title='Public Key' hex={pubkey} copy={copy}/>
+        <HexOnelineComponent title='秘密鍵' hex={priv} copy={copy}/>
+        <HexOnelineComponent title='公開鍵' hex={pubkey} copy={copy}/>
       </VStack>
     </HStack>
     <Divider />
     <Heading>署名アルゴリズム</Heading>
     <VStack>
       <InputGroup size={'sm'}>
-        <InputLeftAddon children='Private Key' width={'12ch'}/>
+        <InputLeftAddon children='秘密鍵' width={'12ch'}/>
         <Input type='text' placeholder='0x1234dd...' onChange={(e) => onSigningKeyChanged(e.target.value)} width={'68ch'} fontFamily={hexFont}/>
       </InputGroup>
       <InputGroup size={'sm'}>
-        <InputLeftAddon children='Message' width={'12ch'}/>
+        <InputLeftAddon children='メッセージ' width={'12ch'}/>
         <Textarea placeholder='signed message' onChange={(e) => onSignedMessageChanged(e.target.value)} resize={'vertical'} width={'68ch'} fontFamily={hexFont}/>
       </InputGroup>
       <HexOnelineView title={'SHA256'} hex={signedMessageHashed} copy={copy} size={68}/>
       <Button onClick={onSignClicked} colorScheme={'blue'}>Sign</Button>
       <InputGroup size={'sm'}>
-        <InputLeftAddon children='Signature' width={'12ch'}/>
+        <InputLeftAddon children='署名' width={'12ch'}/>
         <Textarea width={'68ch'} value={signature?.toString('hex') ?? ''} fontFamily={hexFont} readOnly={true}/>
       </InputGroup>
     </VStack>
@@ -143,16 +181,16 @@ export default function SignaturePage() {
     <Heading>検証アルゴリズム</Heading>
     <VStack>
       <InputGroup size={'sm'}>
-        <InputLeftAddon children='Public Key' width={'12ch'}/>
+        <InputLeftAddon children='公開鍵' width={'12ch'}/>
         <Input type='text' placeholder='0x1234dd...' onChange={(e) => onVerifingKeyChanged(e.target.value)}  width={'70ch'} fontFamily={hexFont}/>
       </InputGroup>
       <InputGroup size={'sm'}>
-        <InputLeftAddon children='Message' width={'12ch'}/>
+        <InputLeftAddon children='メッセージ' width={'12ch'}/>
         <Textarea placeholder='signed message' onChange={(e) => onVerifiedMessageChanged(e.target.value)} resize={'vertical'} width={'70ch'} fontFamily={hexFont}/>
       </InputGroup>
       <HexOnelineView title={'SHA256'} hex={verifiedMessageHashed} copy={copy} size={70}/>
       <InputGroup size={'sm'}>
-        <InputLeftAddon children='Signature' width={'12ch'}/>
+        <InputLeftAddon children='署名' width={'12ch'}/>
         <Textarea placeholder='0x1234...' onChange={(e) => onSignatureChanged(e.target.value)} resize={'vertical'} width={'70ch'} fontFamily={hexFont}/>
       </InputGroup>
         <Button onClick={onVerifyClicked} colorScheme={'blue'}>Verify</Button>
