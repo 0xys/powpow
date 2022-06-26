@@ -9,6 +9,7 @@ import { hexFont, HexOnelineComponent } from '../../components/hex/hexOneline';
 import { HexOnelineView } from '../../components/hex/hexOnelineView';
 
 import text from '../../../texts/signature.json'
+import styles from '../../../styles/Layout.module.css';
 
 type SignatureVerificationResult = 'empty' | 'valid' | 'invalid'
 
@@ -110,58 +111,63 @@ export default function SignaturePage() {
   }, [sigValidity])
 
   return (<VStack>
-    <Heading>
-      電子署名
-    </Heading>
-    <Text>
-      {text[1]}
-    </Text>
-    <Text>
-      {text[2]}
-    </Text>
-    <Text>
-      {text[3]}
-    </Text>
-    <Text>
-      {text[4]}
-    </Text>
-    <Text>
-      {text[5]}
-    </Text>
-    <Text>
-      {text[6]}
-    </Text>
-    <Text>
-      {text[7]}
-    </Text>
+    <VStack className={styles.block}>
+      <Heading>
+        電子署名
+      </Heading>
+      <Text>
+        {text[1]}
+      </Text>
+      <Text>
+        {text[2]}
+      </Text>
+      <Text>
+        {text[3]}
+      </Text>
+      <Text>
+        {text[4]}
+      </Text>
+      <Text>
+        {text[5]}
+      </Text>
+      <Text>
+        {text[6]}
+      </Text>
+      <Text>
+        {text[7]}
+      </Text>
+      <HStack>
+        <VStack>
+          <Image src='/img/hanko.png' alt='hanko flow' />
+          <Text>印鑑を使った署名方法</Text>
+        </VStack>
+        <Box boxSize={'40'}/>
+        <VStack>
+          <Image src='/img/sig.png' alt='sig flow' />
+          <Text>署名アルゴリズムを使った署名方法</Text>
+        </VStack>
+      </HStack>
+    </VStack>
+    
+    <VStack className={styles.toolblock}>
+      <Heading>鍵生成</Heading>
+      <Text>
+        {text['keygen']}
+      </Text>
+      <HStack>
+        <Button onClick={onGenKeyPairButtonClicked} colorScheme={'blue'}>
+          Generate Key Pair
+        </Button>
+        <VStack align={'start'}>
+          <HexOnelineComponent title='秘密鍵' hex={priv} copy={copy}/>
+          <HexOnelineComponent title='公開鍵' hex={pubkey} copy={copy}/>
+        </VStack>
+      </HStack>
+    </VStack>
+
     <HStack>
-      <VStack>
-        <Image src='/img/hanko.png' alt='hanko flow' />
-        <Text>印鑑を使った署名方法</Text>
-      </VStack>
-      <Box boxSize={'40'}/>
-      <VStack>
-        <Image src='/img/sig.png' alt='sig flow' />
-        <Text>署名アルゴリズムを使った署名方法</Text>
-      </VStack>
-    </HStack>
-    <Divider />
-    <Heading>鍵生成</Heading>
-    <Text>
-      {text['keygen']}
-    </Text>
-    <HStack>
-      <Button onClick={onGenKeyPairButtonClicked} colorScheme={'blue'}>
-        Generate Key Pair
-      </Button>
-      <VStack align={'start'}>
-        <HexOnelineComponent title='秘密鍵' hex={priv} copy={copy}/>
-        <HexOnelineComponent title='公開鍵' hex={pubkey} copy={copy}/>
-      </VStack>
-    </HStack>
-    <Divider />
-    <Heading>署名アルゴリズム</Heading>
-    <VStack>
+    <VStack className={styles.toolblock}>
+      <Heading>署名アルゴリズム</Heading>
       <InputGroup size={'sm'}>
         <InputLeftAddon children='秘密鍵' width={'12ch'}/>
         <Input type='text' placeholder='0x1234dd...' onChange={(e) => onSigningKeyChanged(e.target.value)} width={'68ch'} fontFamily={hexFont}/>
@@ -177,9 +183,9 @@ export default function SignaturePage() {
         <Textarea width={'68ch'} value={signature?.toString('hex') ?? ''} fontFamily={hexFont} readOnly={true}/>
       </InputGroup>
     </VStack>
-    <Divider />
-    <Heading>検証アルゴリズム</Heading>
-    <VStack>
+    
+    <VStack className={styles.toolblock}>
+      <Heading>検証アルゴリズム</Heading>
       <InputGroup size={'sm'}>
         <InputLeftAddon children='公開鍵' width={'12ch'}/>
         <Input type='text' placeholder='0x1234dd...' onChange={(e) => onVerifingKeyChanged(e.target.value)}  width={'70ch'} fontFamily={hexFont}/>
@@ -193,9 +199,12 @@ export default function SignaturePage() {
         <InputLeftAddon children='署名' width={'12ch'}/>
         <Textarea placeholder='0x1234...' onChange={(e) => onSignatureChanged(e.target.value)} resize={'vertical'} width={'70ch'} fontFamily={hexFont}/>
       </InputGroup>
-        <Button onClick={onVerifyClicked} colorScheme={'blue'}>Verify</Button>
-        {sigResult}
+      <Button onClick={onVerifyClicked} colorScheme={'blue'}>Verify</Button>
+      {sigResult}
     </VStack>
-    <Divider />
+    </HStack>
+    
+    
+    
   </VStack>)
 }

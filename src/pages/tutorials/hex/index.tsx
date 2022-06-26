@@ -1,8 +1,9 @@
 import { CopyIcon } from "@chakra-ui/icons";
-import { HStack, IconButton, Input, Text, InputGroup, InputLeftAddon, Tooltip, VStack, TableContainer, Table, Thead, Tr, Th, Tbody, Td, Divider, Heading } from "@chakra-ui/react";
+import { HStack, IconButton, Input, Text, InputGroup, InputLeftAddon, Tooltip, VStack, TableContainer, Table, Thead, Tr, Th, Tbody, Td, Divider, Heading, Box } from "@chakra-ui/react";
 import { toBigIntBE, toBufferBE } from "bigint-buffer";
 import { useMemo, useState } from "react";
 import { hexFont } from "../../components/hex/hexOneline";
+import styles from '../../../styles/Layout.module.css';
 
 const regex = new RegExp(`^(0x)?([0-9A-Fa-f][0-9A-Fa-f])*$`)
 
@@ -51,36 +52,44 @@ export default function HexPage() {
 
   return (
     <VStack>
-      <Heading>16進数</Heading>
-      <Text>
-        16進数は数を16種類の文字で表現する。0-9までは既存の数字を使えばいいが、それでは足りなくなる10以降はアルファベットを使う。10進数では10になると繰り上がるように、16進数では16になると桁が増える。0から15までの変換表を下に示した。
-      </Text>
-      <HStack margin='12px'>
-        <DecHexTable array={DEC.slice(0, 4)} colored={true} />
-        <DecHexTable array={DEC.slice(4, 8)} colored={false} />
-        <DecHexTable array={DEC.slice(8, 12)} colored={true} />
-        <DecHexTable array={DEC.slice(12, 16)} colored={false} />
-      </HStack>
-
-      <Divider />
-      <Text>
-        任意の10進数を16進数に変換するツール
-      </Text>
-      <DecimalInput onEdit={onEditDecimal} />
+      <VStack className={styles.block}>
+        <Heading>16進数</Heading>
+        <Text>
+          16進数は数を16種類の文字で表現する。0-9までは既存の数字を使えばいいが、それでは足りなくなる10以降はアルファベットを使う。10進数では10になると繰り上がるように、16進数では16になると桁が増える。0から15までの変換表を下に示した。
+        </Text>
+        <HStack margin='12px'>
+          <DecHexTable array={DEC.slice(0, 4)} colored={true} />
+          <DecHexTable array={DEC.slice(4, 8)} colored={false} />
+          <DecHexTable array={DEC.slice(8, 12)} colored={true} />
+          <DecHexTable array={DEC.slice(12, 16)} colored={false} />
+        </HStack>
+      </VStack>
       <HStack>
-        <Text>16進数:</Text>
-        <Text>{bufStr}</Text>
-      </HStack>
+        <VStack className={styles.toolblock}>
+          <Heading size='md'>
+            任意の10進数を16進数に変換するツール
+          </Heading>
+          <DecimalInput onEdit={onEditDecimal} />
+          <HStack>
+            <Text>16進数:</Text>
+            <Text>{bufStr}</Text>
+          </HStack>
+        </VStack>
 
-      <Divider />
-      <Text>
-        任意の16進数を10進数に変換するツール
-      </Text>
-      <HexInput onEdit={onEditHex} />
-      <HStack>
-        <Text>10進数:</Text>
-        <Text>{decStr}</Text>
+        <VStack className={styles.toolblock}>
+          <Heading size='md'>
+            任意の16進数を10進数に変換するツール
+          </Heading>
+          <HexInput onEdit={onEditHex} />
+          <HStack>
+            <Text>10進数:</Text>
+            <Text>{decStr}</Text>
+          </HStack>
+        </VStack>
       </HStack>
+      
+      
+      
     </VStack>
   )
 }

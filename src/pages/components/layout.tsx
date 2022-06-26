@@ -25,7 +25,7 @@ const Layout = ({ children }: Props) => {
         </Center> */}
       </header>
 
-      <Box className={styles.main} shadow='lg' rounded='lg'>{children}</Box>
+      <div className={styles.main}>{children}</div>
 
       <footer className={styles.footer}>
         <Link

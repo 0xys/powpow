@@ -3,6 +3,7 @@ import { VStack, Heading, InputGroup, InputLeftAddon, Input, InputRightElement, 
 import { useEffect, useMemo, useState } from "react";
 import { hexFont } from "../../components/hex/hexOneline";
 import { createHash, randomBytes } from 'crypto';
+import styles from '../../../styles/Layout.module.css';
 
 export default function HashPage() {
   const [preImage, setPreImage] = useState<string>('')
@@ -29,7 +30,7 @@ export default function HashPage() {
   }
 
   return (
-    <VStack>
+    <VStack className={styles.block}>
       <Heading>ハッシュ関数</Heading>
       <p>
         ハッシュ関数とは入力に対して一意に定まる出力を返す関数である。その際、出力から入力を逆算することはできない。ハッシュ関数にも様々な種類があり、SHA256というハッシュ関数の場合は出力は32バイトの固定長のハッシュ値が返ってきます。

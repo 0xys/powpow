@@ -8,6 +8,7 @@ import { HexOnelineView } from '../../components/hex/hexOnelineView';
 import { BlockHeader } from '../../../types/blockchain/blockHeader';
 import React from 'react';
 import { toBigIntBE } from 'bigint-buffer';
+import styles from '../../../styles/Layout.module.css';
 
 const Octet = (prop: {
   index: number,
@@ -233,7 +234,7 @@ export default function Pow() {
   }
 
   return (
-    <VStack>
+    <VStack className={styles.block}>
       <Heading>
         マイニング
       </Heading>

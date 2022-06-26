@@ -36,9 +36,26 @@
 .main {
   justify-content: start;
   align-items: center;
-  margin: 6em;
-  background-color: white;
+  margin: 2em;
+  padding: 2em;
+}
+
+.block {
+  align-items: center;
+  margin: 1em;
   padding: 6em;
+  background-color: #fff;
+  box-shadow: 1em;
+  border-radius: 1em;
+}
+
+.toolblock {
+  align-items: center;
+  margin: 2em;
+  padding: 2em;
+  background-color: #fff;
+  box-shadow: 1em;
+  border-radius: 1em;
 }
 
 .header {
