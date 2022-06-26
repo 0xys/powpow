@@ -1,4 +1,4 @@
-import { toBufferBE } from "bigint-buffer";
+import { toBigIntBE, toBufferBE } from "bigint-buffer";
 import { Block } from "./blockchain/block";
 import { Transaction } from "./blockchain/transaction";
 
@@ -77,7 +77,8 @@ export class BlockFactory {
     }
 
     finalize = (): Block => {
-        const block = new Block(this.version, this.height, this.prevBlockHash, this.transactions, this.nonce, this.difficultyTarget)
+        const target = toBigIntBE(this.difficultyTarget)
+        const block = new Block(this.version, this.height, this.prevBlockHash, this.transactions, this.nonce, target)
         return block
     }
 }

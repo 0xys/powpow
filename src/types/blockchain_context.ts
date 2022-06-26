@@ -9,7 +9,7 @@ import { Miner } from "./miner/miner";
 export class BlockchainContext {
     private blockchain: Blockchain
     constructor(private validator: BlockchainValidator) {
-        this.blockchain = new Blockchain()
+        this.blockchain = new Blockchain([])
     }
 
     getBalance = (addressString: string): bigint => {
