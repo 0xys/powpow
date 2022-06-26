@@ -1,8 +1,7 @@
 import '../styles/globals.css'
 import type { AppProps } from 'next/app'
 import React, { useState } from 'react'
-import Link from 'next/link'
-import { ChakraProvider, HStack } from '@chakra-ui/react'
+import { ChakraProvider, HStack, Link } from '@chakra-ui/react'
 
 function MyApp({ Component, pageProps }: AppProps) {
   return (
