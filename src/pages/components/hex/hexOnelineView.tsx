@@ -5,7 +5,7 @@ import React from 'react'
 
 export const hexFont = 'Consolas'
 
-export const HexOnelineView = React.memo((prop: {
+const HexOnelineView = React.memo((prop: {
     title: string,
     hex?: Uint8Array,
     size?: number,
@@ -30,3 +30,7 @@ export const HexOnelineView = React.memo((prop: {
         </InputGroup>
     )
 })
+
+HexOnelineView.displayName = 'HexOnelineView'
+
+export { HexOnelineView }

@@ -1,7 +1,7 @@
 import React from "react";
 import { Transaction } from "../../types/blockchain/transaction";
 
-export const TransactionPreviewComponent = React.memo((prop: {
+const TransactionPreviewComponent = React.memo((prop: {
     tx: Transaction,
     onDiscard: (hash: string) => void,
     onAdd: (hash: string) => void,
@@ -27,3 +27,7 @@ export const TransactionPreviewComponent = React.memo((prop: {
       </button>
     </div>
 })
+
+TransactionPreviewComponent.displayName = 'TransactionPreviewComponent'
+
+export { TransactionPreviewComponent }

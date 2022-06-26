@@ -38,7 +38,7 @@ export default function HashPage() {
       <Textarea placeholder='ハッシュ前のデータ' onChange={e => onPreImageChange(e.target.value)} resize={'vertical'} width={'70ch'} />
       <HashView data={image} copy={copy} />
       <p>
-        "{preImage}"という入力の場合、"{imageStr}"というハッシュ値が返ってきていますね。
+        &quot;{preImage}&quot;という入力の場合、&quot;{imageStr}&quot;というハッシュ値が返ってきていますね。
       </p>
     </VStack>
   )

@@ -10,7 +10,7 @@ export type TxError = {
 type RemoveTransaction = (hash: string) => void
 type WrappedTx = { tx: Transaction, message?: string, isCoinbase: boolean }
 
-export const BlockFactoryComponent = React.memo((prop: {
+const BlockFactoryComponent = React.memo((prop: {
     transactions: Transaction[],
     txerrors: TxError[],
     height: string,
@@ -48,3 +48,6 @@ export const BlockFactoryComponent = React.memo((prop: {
         </div>   
     )
 })
+
+BlockFactoryComponent.displayName = 'BlockFactoryComponent'
+export { BlockFactoryComponent }

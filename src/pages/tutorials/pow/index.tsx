@@ -27,6 +27,8 @@ const Octet = (prop: {
     </Center>)
 }
 
+Octet.displayName = 'Octet'
+
 const defaultBlockHeader = new BlockHeader(BigInt(1), BigInt(0), crypto.randomBytes(32), crypto.randomBytes(32), BigInt(0))
 
 type MiningStatus = 'not_ready' | 'ready' | 'mining' | 'mined'
@@ -353,6 +355,8 @@ const HexOnelineEdit = React.memo((prop: {
   )
 })
 
+HexOnelineEdit.displayName = 'HexOnelineEdit'
+
 const HexOnelineCannotEdit = React.memo((prop: {
   title: string,
   hex?: Uint8Array,
@@ -381,3 +385,5 @@ const HexOnelineCannotEdit = React.memo((prop: {
     </HStack>
   )
 })
+
+HexOnelineCannotEdit.displayName = 'HexOnelineCannotEdit'

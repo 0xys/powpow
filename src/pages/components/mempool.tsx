@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
 import { Mempool } from "../../types/miner/mempool";
 
-export const MempoolComponent = React.memo((prop: {
+const MempoolComponent = React.memo((prop: {
     mempool: Mempool,
     onRemove: (hash: string) => void,
     onSelect: (hash: string) => void,
@@ -37,3 +37,7 @@ export const MempoolComponent = React.memo((prop: {
         </li>
     </div>
 })
+
+MempoolComponent.displayName = 'MempoolComponent'
+
+export { MempoolComponent }

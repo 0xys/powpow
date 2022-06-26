@@ -12,7 +12,7 @@ export type FetchedWallet = {
     wallet: Wallet
 }
 
-export const WalletComponent = React.memo(
+const WalletComponent = React.memo(
     (prop: {
         onSend: OnSendHandler,
         wallet: FetchedWallet|undefined,
@@ -91,3 +91,7 @@ export const WalletComponent = React.memo(
         </div>
     </div>
 })
+
+WalletComponent.displayName = 'WalletComponent'
+
+export { WalletComponent }

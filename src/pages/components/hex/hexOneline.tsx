@@ -5,7 +5,7 @@ import React from 'react'
 
 export const hexFont = 'Consolas'
 
-export const HexOnelineComponent = React.memo((prop: {
+const HexOnelineComponent = React.memo((prop: {
     title: string,
     hex?: Uint8Array,
     copy: (m: string) => void,
@@ -24,3 +24,7 @@ export const HexOnelineComponent = React.memo((prop: {
         </ButtonGroup>
     )
 })
+
+HexOnelineComponent.displayName = 'HexOnelineComponent'
+
+export { HexOnelineComponent }
