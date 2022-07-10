@@ -278,6 +278,8 @@ export default function Pow() {
         <li>Nonce: {text.nonce}</li>
         <li>Block Hash: {text.block_hash}</li>
       </ul>
+      <Text fontSize='xl' fontWeight='bold'>マイニング作業</Text>
+      <Text>{text.mining}</Text>
     </VStack>
   )
 }
