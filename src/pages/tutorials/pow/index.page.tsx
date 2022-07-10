@@ -179,7 +179,7 @@ export default function Pow() {
       }
       let nonce = blockHeader.getNonce()
       nonce = nonce + BigInt(1)
-      console.log(miningStatus, nonce)
+      console.log(miningStatus, nonce, blockHeader.getDifficultyTargetBuffer().toString('hex'))
       blockHeader.setNonce(nonce)
 
       await new Promise(resolve => setTimeout(resolve, 100))
@@ -315,7 +315,7 @@ const HexOnelineEdit = React.memo((prop: {
   const [err, setErr] = useState('')
 
   const hexString = useMemo(() => {
-      return Buffer.from(hex ?? []).toString('hex')
+      return Buffer.from(prop.hex ?? []).toString('hex')
   }, [prop.hex])
 
   const regex = useMemo(() => {
