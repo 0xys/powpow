@@ -138,13 +138,25 @@ export default function SignaturePage() {
       </Text>
       <HStack>
         <VStack>
-          <Image src='/img/hanko.png' alt='hanko flow' />
+          <Image src='/img/sign/hanko.png' alt='hanko flow' />
           <Text>印鑑を使った署名方法</Text>
         </VStack>
         <Box boxSize={'40'}/>
         <VStack>
-          <Image src='/img/sig.png' alt='sig flow' />
+          <Image src='/img/sign/sig.png' alt='sig flow' />
           <Text>署名アルゴリズムを使った署名方法</Text>
+        </VStack>
+      </HStack>
+      <Divider />
+      <HStack>
+        <VStack>
+          <Image src='/img/sigveri/hanko_verify.png' alt='hanko flow' />
+          <Text>印鑑登録を使った検証方法</Text>
+        </VStack>
+        <Box boxSize={'40'}/>
+        <VStack>
+          <Image src='/img/sigveri/sig_verify.png' alt='sig flow' />
+          <Text>署名検証アルゴリズムを使った検証方法</Text>
         </VStack>
       </HStack>
     </VStack>
