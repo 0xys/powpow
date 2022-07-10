@@ -5,12 +5,24 @@ import secp256k1 from 'secp256k1'
 export const godAddress = Buffer.allocUnsafe(33).fill(0)
 
 export class Transaction {
+    from: Buffer
+    sequence: bigint
+    fee: bigint
+    dests: Destination[]
+    signature: Buffer
+
     constructor(
-        private from: Buffer,
-        private sequence: bigint,
-        private fee: bigint,
-        private dests: Destination[],
-        private signature: Buffer = Buffer.allocUnsafe(65)) {
+        from: Buffer,
+        sequence: bigint,
+        fee: bigint,
+        dests: Destination[],
+        signature: Buffer = Buffer.allocUnsafe(65))
+    {
+        this.from = from
+        this.sequence = sequence
+        this.fee = fee
+        this.dests = dests
+        this.signature = signature
     }
 
     //  33 byte
@@ -20,6 +32,9 @@ export class Transaction {
     getFromAddressString = (): string => {
         return this.from.toString('hex')
     }
+    setFromAddress = (from: Buffer) => {
+        this.from = from
+    }
 
     //  4 byte
     getSequence = (): bigint => {
@@ -28,14 +43,26 @@ export class Transaction {
     getSequenceBuffer = (): Buffer => {
         return toBufferBE(this.sequence, 4)
     }
+    setSequence = (seq: Buffer) => {
+        this.sequence = toBigIntBE(seq)
+    }
 
     // 8 byte
     getFee = (): bigint => {
         return this.fee
     }
+    getFeeBuffer = (): Buffer => {
+        return toBufferBE(this.fee, 8)
+    }
+    setFee = (fee: Buffer) => {
+        this.fee = toBigIntBE(fee)
+    }
 
     getDests = (): Destination[] => {
         return this.dests
+    }
+    setDests = (dests: Destination[]) => {
+        this.dests = dests
     }
 
     // 65 byte
@@ -56,6 +83,11 @@ export class Transaction {
     toSignable = (): Buffer => {
         let bufs: Buffer[] = []
         bufs.push(this.from)
+
+        bufs.push(this.getSequenceBuffer())
+
+        const feeBuf = toBufferBE(this.fee, 8)
+        bufs.push(feeBuf)
 
         const lenBuf = conv(this.dests.length)
         bufs.push(lenBuf)
@@ -174,6 +206,9 @@ export class Destination {
 
     getAmount = (): bigint => {
         return this.amount
+    }
+    getAmountBuffer = (): Buffer => {
+        return toBufferBE(this.amount, 8)
     }
 
     getMessage = (): Buffer => {
