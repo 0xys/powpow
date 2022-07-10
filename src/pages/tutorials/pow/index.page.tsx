@@ -1,4 +1,4 @@
-import { Box, VStack, HStack, Input, Text, Button, Divider, Heading, ButtonGroup, IconButton, Textarea, InputGroup, InputLeftAddon, useToast, Alert, AlertIcon, AlertTitle, SimpleGrid, Center } from '@chakra-ui/react'
+import { Box, VStack, HStack, Input, Text, Button, Divider, Heading, ButtonGroup, IconButton, Textarea, InputGroup, InputLeftAddon, useToast, Alert, AlertIcon, AlertTitle, SimpleGrid, Center, Badge } from '@chakra-ui/react'
 import { AddIcon, CopyIcon } from '@chakra-ui/icons'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import crypto from 'crypto'
@@ -9,6 +9,8 @@ import { BlockHeader } from '../../../types/blockchain/blockHeader';
 import React from 'react';
 import { toBigIntBE } from 'bigint-buffer';
 import styles from '../../../styles/Layout.module.css';
+
+import text from '../../../texts/mining.json'
 
 const Octet = (prop: {
   index: number,
@@ -256,13 +258,26 @@ export default function Pow() {
       <Center>
         <HexOnelineView title={'Block Hash'} hex={hash} size={68} copy={copy} titleLength={20}/>
       </Center>
-      <Button disabled={ miningStatus == 'not_ready' || miningStatus == 'mined' } colorScheme='teal' onClick={() => {
-        if(miningStatus == 'ready') {
-          setMiningStatus('mining')
-        }else if (miningStatus == 'mining'){
-          setMiningStatus('ready')  // cancel mining
-        }
-      }} isLoading={miningStatus=='mining'} loadingText='Mining...' spinnerPlacement='start'>{mineButtonText}</Button>
+      <HStack>
+        <Button disabled={ miningStatus == 'not_ready' || miningStatus == 'mined' } colorScheme='teal' onClick={() => {
+          if(miningStatus == 'ready') {
+            setMiningStatus('mining')
+          }else if (miningStatus == 'mining'){
+            setMiningStatus('ready')  // cancel mining
+          }
+        }} isLoading={miningStatus=='mining'} loadingText='Mining...' spinnerPlacement='start'>{mineButtonText}</Button>
+        {miningStatus == 'mined' ? <Badge colorScheme='green' variant='outline' fontSize='1.2em'>Done</Badge> : <></>}
+      </HStack>
+      
+      <ul>
+        <li>Version: {text.version}</li>
+        <li>Height: {text.height}</li>
+        <li>Prev Block Hash: {text.prev_block_hash}</li>
+        <li>Difficulty: {text.difficulty}</li>
+        <li>Merkle Root: {text.merkle_root}</li>
+        <li>Nonce: {text.nonce}</li>
+        <li>Block Hash: {text.block_hash}</li>
+      </ul>
     </VStack>
   )
 }
