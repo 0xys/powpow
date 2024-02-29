@@ -64,32 +64,27 @@ export default function HexPage() {
           <DecHexTable array={DEC.slice(12, 16)} colored={false} />
         </HStack>
       </VStack>
-      <HStack>
-        <VStack className={styles.toolblock}>
-          <Heading size='md'>
-            任意の10進数を16進数に変換するツール
-          </Heading>
-          <DecimalInput onEdit={onEditDecimal} />
-          <HStack>
-            <Text>16進数:</Text>
-            <Text>{bufStr}</Text>
-          </HStack>
-        </VStack>
+      <VStack className={styles.toolblock}>
+        <Heading size='md'>
+          任意の10進数を16進数に変換するツール
+        </Heading>
+        <DecimalInput onEdit={onEditDecimal} />
+        <HStack>
+          <Text>16進数:</Text>
+          <Text>{bufStr}</Text>
+        </HStack>
+      </VStack>
 
-        <VStack className={styles.toolblock}>
-          <Heading size='md'>
-            任意の16進数を10進数に変換するツール
-          </Heading>
-          <HexInput onEdit={onEditHex} />
-          <HStack>
-            <Text>10進数:</Text>
-            <Text>{decStr}</Text>
-          </HStack>
-        </VStack>
-      </HStack>
-      
-      
-      
+      <VStack className={styles.toolblock}>
+        <Heading size='md'>
+          任意の16進数を10進数に変換するツール
+        </Heading>
+        <HexInput onEdit={onEditHex} />
+        <HStack>
+          <Text>10進数:</Text>
+          <Text>{decStr}</Text>
+        </HStack>
+      </VStack>
     </VStack>
   )
 }

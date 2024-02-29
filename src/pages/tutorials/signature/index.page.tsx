@@ -177,7 +177,6 @@ export default function SignaturePage() {
       </HStack>
     </VStack>
 
-    <HStack>
     <VStack className={styles.toolblock}>
       <Heading>署名アルゴリズム</Heading>
       <InputGroup size={'sm'}>
@@ -214,7 +213,7 @@ export default function SignaturePage() {
       <Button onClick={onVerifyClicked} colorScheme={'blue'}>Verify</Button>
       {sigResult}
     </VStack>
-    </HStack>
+
     
     
     

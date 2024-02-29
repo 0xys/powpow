@@ -1,0 +1,26 @@
+[
+    {
+        "priv":"be1d7e97fd0f0ecbaaa3b7bc4c08de5256575974e7d5407b646ec9a4f1011e1f",
+        "name": "アリス",
+        "balance": 300,
+        "seq": 2
+    },
+    {
+        "priv":"eb368324408b85747ff7c2bae1c2459a26479a94c84b98032914b437b3e4f26e",
+        "name": "ボブ",
+        "balance": 1100,
+        "seq": 100
+    },
+    {
+        "priv":"56ceda097a65acdf7a0c52f5e813916f7195ef76b5a3535a65e6e1a57fcb18fd",
+        "name": "サトシ",
+        "balance": 542893147837860,
+        "seq": 110024
+    },
+    {
+        "priv":"e35d9796adb1c358422281be59bcffc0abd20041aa0857262b5388142af61f5c",
+        "name": "ご新規さん",
+        "balance": 0,
+        "seq": 0
+    }
+]
