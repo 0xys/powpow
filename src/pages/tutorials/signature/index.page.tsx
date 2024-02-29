@@ -168,7 +168,7 @@ export default function SignaturePage() {
       </Text>
       <HStack>
         <Button onClick={onGenKeyPairButtonClicked} colorScheme={'blue'}>
-          Generate Key Pair
+          鍵生成
         </Button>
         <VStack align={'start'}>
           <HexOnelineComponent title='秘密鍵' hex={priv} copy={copy}/>

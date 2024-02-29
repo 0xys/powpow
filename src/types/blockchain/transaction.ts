@@ -143,6 +143,26 @@ export class Transaction {
         return 33 + 4 + 8 + 4 + destsSize + 65
     }
 
+    sign = (privateKey: Buffer): Buffer => {
+        const data = this.hash()
+        const sigFull = secp256k1.ecdsaSign(data, privateKey)
+        const sig = Buffer.from(sigFull.signature)
+        this.setSignature(sig)
+        return sig
+    }
+
+    verify = (): boolean => {
+        if (this.isCoinbase()) {
+            return true
+        }
+        const data = this.hash()
+        if (!secp256k1.publicKeyVerify(this.from)) {
+            return false
+        }
+        const ok = secp256k1.ecdsaVerify(this.getSignature(), data, this.from)
+        return ok
+    }
+
     static decode = (blob: Buffer): Transaction => {
         const from = blob.slice(0, 33)   // 33 byte
 

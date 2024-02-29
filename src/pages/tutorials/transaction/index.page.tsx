@@ -1,17 +1,18 @@
-import { Center, Heading, SimpleGrid, useToast, VStack } from "@chakra-ui/react";
+import { Badge, Button, Center, Heading, HStack, SimpleGrid, useToast, VStack } from "@chakra-ui/react";
 import { toBigIntBE } from "bigint-buffer";
 import { useEffect, useMemo, useState } from "react";
 import crypto from 'crypto'
 import secp256k1 from 'secp256k1'
 import { Destination, Transaction } from "../../../types/blockchain/transaction";
-import { hexFont } from "../../components/hex/hexOneline";
+import { hexFont, HexOnelineComponent } from "../../components/hex/hexOneline";
 import { HexOnelineCannotEdit } from "../../components/hex/hexOnelineConstant";
 import { HexOnelineEdit } from "../../components/hex/hexOnelineEditable";
 import { HexOnelineView } from "../../components/hex/hexOnelineView";
+import text from '../../../texts/transaction.json'
 import styles from '../../../styles/Layout.module.css';
 
 const txBlobLength = 126
-
+const txWithSigBlobLength = txBlobLength + 65
 
 const getRandomAddress = (): Buffer => {
   const priv = crypto.randomBytes(32)
@@ -27,7 +28,7 @@ const Octet = (prop: {
   index: number,
   hex: string,
   selected: boolean,
-  onHover: (index: number) => void
+  onHover: (index: number) => void,
 }) => {
   return (<Center
     width='4ch'
@@ -39,8 +40,98 @@ const Octet = (prop: {
       {prop.hex}
     </Center>)
 }
-
 Octet.displayName = 'Octet'
+
+const OctetSmall = (prop: {
+  index: number,
+  hex: string,
+  color?: string,
+}) => {
+  return (<Center
+    width='2.4ch'
+    height='2.4ch'
+    fontFamily={hexFont}
+    background={'white'}
+    color={prop.color ?? 'black'}
+    fontSize='2ch'
+    >
+      {prop.hex}
+    </Center>)
+}
+OctetSmall.displayName = 'OctetSmall'
+
+const SentResult = (prop: {
+  signed: boolean,
+  verified: boolean,
+  tx?: Transaction,
+  signingKey?: Uint8Array,
+}) => {
+  const accept = prop.signed && prop.verified
+  if (accept) {
+    return (<>
+      <Badge colorScheme='green' variant='solid' fontSize='1.2em'>受理</Badge>
+      <p>トランザクションを受け付けました</p>
+    </>)
+  }
+
+  if (!prop.signed) {
+    return (<>
+      <Badge colorScheme='red' variant='solid' fontSize='1.2em'>拒否</Badge>
+      <p>トランザクションは署名されていません</p>
+    </>)
+  }
+
+  if (!prop.verified) {
+    if (!prop.signingKey) {
+      return (<>
+        <Badge colorScheme='red' variant='solid' fontSize='1.2em'>拒否</Badge>
+        <p>署名されていません</p>
+      </>)
+    }
+    if (!prop.tx) {
+      return (<>
+        <Badge colorScheme='red' variant='solid' fontSize='1.2em'>拒否</Badge>
+        <p>トランザクションがありません</p>
+      </>)
+    }
+    if (!Buffer.from(prop.signingKey).equals(prop.tx.getFromAddress())) {
+      return (<>
+        <Badge colorScheme='red' variant='solid' fontSize='1.2em'>拒否</Badge>
+        <p>無効な署名： 署名主の公開鍵が【From】と一致しません</p>
+      </>)
+    }
+    return (<>
+      <Badge colorScheme='red' variant='solid' fontSize='1.2em'>拒否</Badge>
+      <p>無効な署名： 現在のトランザクション内容に対する署名ではありません</p>
+    </>)
+  }
+
+  return (<>
+    <Badge colorScheme='green' variant='solid' fontSize='1.2em'>受理</Badge>
+    <p>トランザクションを受け付けました</p>
+  </>)
+}
+
+const SignResult = (prop: {
+  signed: boolean,
+  verified: boolean,
+}) => {
+  if (!prop.signed) {
+    return (
+      <p>トランザクションは署名されていません</p>
+    )
+  }
+  if (prop.signed && prop.verified) {
+    return (<>
+      <Badge colorScheme='green' variant='solid' fontSize='1.2em'>有効な署名</Badge>
+      <p>有効な署名です</p>
+    </>)
+  }
+  return (<>
+    <Badge colorScheme='red' variant='solid' fontSize='1.2em'>無効な署名</Badge>
+    <p>署名主の公開鍵が【From】と一致しません</p>
+  </>)
+}
 
 export default function TransactionPage() {
   const [label, setLabel] = useState('')
@@ -48,6 +139,10 @@ export default function TransactionPage() {
   const [selectedBytes, setSelectedBytes] = useState<Uint8Array>()
   const [tx, setTx] = useState<Transaction>()
   const [txError, setTxError] = useState<number[]>([0,0,0,0,0,0])
+  const [priv, setPrivateKey] = useState<Buffer>()
+  const [signed, setSigned] = useState(false)
+  const [sent, setSent] = useState(false)
+  const [verified, setVerified] = useState(false)
 
   const toast = useToast()
 
@@ -55,12 +150,26 @@ export default function TransactionPage() {
     setTx(defaultTx)
   }, [])
 
-  const [bytes, hexArray] = useMemo(() => {
+  const onGenKeyPairButtonClicked = () => {
+    const priv = crypto.randomBytes(32)
+    setPrivateKey(priv)
+  }
+  const pubkey = useMemo(() => {
+    if (!priv) {
+      return
+    }
+    return secp256k1.publicKeyCreate(priv, true)
+  }, [priv])
+
+  const [bytes, hexArray, fullBytes, fullHexArray] = useMemo(() => {
     let bytes: Buffer
+    let fullBytes: Buffer
     if (!tx) {
       bytes = Buffer.alloc(txBlobLength).fill(0)
+      fullBytes = Buffer.alloc(txWithSigBlobLength).fill(0)
     }else{
       bytes = tx.toSignable()
+      fullBytes = tx.encode()
     }
 
     const hexArray = bytes.toJSON()
@@ -72,7 +181,17 @@ export default function TransactionPage() {
           return v.toString(16)
         }
       })
-    return [bytes, hexArray]
+    
+    const fullHexArray = fullBytes.toJSON()
+      .data
+      .map(v => {
+        if (v < 16) {
+          return '0' + v.toString(16)
+        }else{
+          return v.toString(16)
+        }
+      })
+    return [bytes, hexArray, fullBytes, fullHexArray]
   }, [tx])
 
   const copy = (text: string) => {
@@ -201,6 +320,10 @@ export default function TransactionPage() {
     tx.setFee(fee)
     setTx({...tx})
   }
+  const hash = useMemo(() => {
+    return tx?.hash()
+  }, [tx])
+  
   const setSignature = (sig: Buffer) => {
     if (!tx) {
       return
@@ -208,10 +331,26 @@ export default function TransactionPage() {
     tx.setSignature(sig)
     setTx({...tx})
   }
+  
+  const onSignButtonClicked = () => {
+    if (!tx || !priv) {
+      return
+    }
+    tx.sign(priv)
+    setTx({...tx})
+    setSigned(true)
+    const verified = tx.verify()
+    setVerified(verified)
+  }
 
-  const hash = useMemo(() => {
-    return tx?.hash()
-  }, [tx])
+  const onSendButtonClicked = () => {
+    if (!tx) {
+      return
+    }
+    setSent(true)
+    const verified = tx.verify()
+    setVerified(verified)
+  }
 
   const onError = (index: number) => (anyError: boolean) => {
     if (anyError) {
@@ -223,23 +362,80 @@ export default function TransactionPage() {
     }
   }
 
-  return (
-    <VStack className={styles.block}>
-      <Heading>
-        トランザクション
-      </Heading>
-      <HexOnelineEdit title='From' titleLength={12} hex={tx?.getFromAddress()} byteLength={33} hexLength={70} setValue={setFrom} focused={label=='from'} anyError={onError(0)}/>
-      <HexOnelineEdit title='Sequence' titleLength={12} hex={tx?.getSequenceBuffer()} byteLength={4} hexLength={70} setValue={setSequence} focused={label=='sequence'} anyError={onError(3)}/>
-      <HexOnelineEdit title='Fee' titleLength={12} hex={tx?.getFeeBuffer()} byteLength={8} hexLength={70} setValue={setFee} focused={label=='fee'} anyError={onError(2)}/>
-      <HexOnelineEdit title='To' titleLength={12} hex={tx?.getDests()[0]?.getAddress()} byteLength={33} hexLength={70} setValue={setTo} focused={label=='to'} anyError={onError(1)}/>
-      <HexOnelineEdit title='Amount' titleLength={12} hex={tx?.getDests()[0]?.getAmountBuffer()} byteLength={8} hexLength={70} setValue={setAmount} focused={label=='amount'} anyError={onError(1)}/>
-      <HexOnelineEdit title='Message' titleLength={12} hex={tx?.getDests()[0]?.getMessage()} byteLength={32} hexLength={70} setValue={setMessage} focused={label=='message'} anyError={onError(1)}/>
-      <SimpleGrid columns={16} onMouseLeave={e => onLeave()}>
-        {hexArray.map((v, i) => <Octet index={i} hex={v} selected={!!selectionArray? selectionArray[i]: false} onHover={onHover} key={i}/>)}
-      </SimpleGrid>
-      <Center>
-        <HexOnelineView title={'Transaction Hash'} hex={hash} size={70} copy={copy} titleLength={20}/>
-      </Center>
+  const onResetButtonClicked = () => {
+    setTx(defaultTx)
+    setPrivateKey(undefined)
+    setSigned(false)
+    setSent(false)
+    setVerified(false)
+  }
+
+  return (<VStack>
+      <VStack className={styles.block}>
+        <Heading>
+          トランザクション
+        </Heading>
+        <HexOnelineEdit title='From' titleLength={12} hex={tx?.getFromAddress()} byteLength={33} hexLength={70} setValue={setFrom} focused={label=='from'} anyError={onError(0)}/>
+        <HexOnelineEdit title='Sequence' titleLength={12} hex={tx?.getSequenceBuffer()} byteLength={4} hexLength={70} setValue={setSequence} focused={label=='sequence'} anyError={onError(3)}/>
+        <HexOnelineEdit title='Fee' titleLength={12} hex={tx?.getFeeBuffer()} byteLength={8} hexLength={70} setValue={setFee} focused={label=='fee'} anyError={onError(2)}/>
+        <HexOnelineEdit title='To' titleLength={12} hex={tx?.getDests()[0]?.getAddress()} byteLength={33} hexLength={70} setValue={setTo} focused={label=='to'} anyError={onError(1)}/>
+        <HexOnelineEdit title='Amount' titleLength={12} hex={tx?.getDests()[0]?.getAmountBuffer()} byteLength={8} hexLength={70} setValue={setAmount} focused={label=='amount'} anyError={onError(1)}/>
+        <HexOnelineEdit title='Message' titleLength={12} hex={tx?.getDests()[0]?.getMessage()} byteLength={32} hexLength={70} setValue={setMessage} focused={label=='message'} anyError={onError(1)}/>
+        <SimpleGrid columns={16} onMouseLeave={e => onLeave()}>
+          {hexArray.map((v, i) => <Octet index={i} hex={v} selected={!!selectionArray? selectionArray[i]: false} onHover={onHover} key={i}/>)}
+        </SimpleGrid>
+        <Center>
+          <HexOnelineView title={'Transaction Hash'} hex={hash} size={70} copy={copy} titleLength={20}/>
+        </Center>
+      </VStack>
+      <VStack className={styles.toolblock}>
+        <Heading>
+            署名者
+        </Heading>
+        <p>{text.signer}</p>
+        <HStack>
+          <Button onClick={onGenKeyPairButtonClicked} colorScheme={'blue'}>
+            鍵生成
+          </Button>
+          <VStack align={'start'}>
+            <HexOnelineComponent title='秘密鍵' hex={priv} copy={copy}/>
+            <HexOnelineComponent title='公開鍵' hex={pubkey} copy={copy}/>
+          </VStack>
+        </HStack>
+        <HStack>
+          <Button colorScheme='teal' onClick={onSignButtonClicked}>トランザクションを署名</Button>
+        </HStack>
+        <SignResult signed={signed} verified={verified}/>
+      </VStack>
+      <VStack className={styles.toolblock}>
+        <Heading>
+            トランザクション送信者
+        </Heading>
+        <p>{text.sender}</p>
+        <SimpleGrid columns={16}>
+          {signed ? fullHexArray.map((v, i) => <OctetSmall index={i} hex={v} color={i >= txBlobLength ? 'blue.500': 'orange.500'}/>):hexArray.map((v, i) => <OctetSmall index={i} hex={v} color='orange.500'/>)}
+        </SimpleGrid>
+        <Button onClick={onSendButtonClicked} colorScheme={'blue'}>
+          トランザクションを送信
+        </Button>
+      </VStack>
+      <VStack className={styles.toolblock}>
+        <Heading>
+          検証者（ノード運営者）
+        </Heading>
+        {sent ? <SentResult signed={signed} verified={verified} tx={tx} signingKey={pubkey}/>: <p>トランザクションが送信されていません</p>}
+      </VStack>
+      <Button onClick={onResetButtonClicked} backgroundColor={'red.500'} color={'white'}>リセット</Button>
     </VStack>
   )
+}
+
+const getReason = (signed: boolean, verified: boolean) => {
+  if (!signed) {
+    return '署名されていません'
+  }
+  if (!verified) {
+    return '署名が無効です'
+  }
+  return ''
 }
