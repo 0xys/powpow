@@ -155,13 +155,6 @@ export default function TransactionPage() {
     tx.setSequence(seq)
     setTx({...tx})
   }
-  const setDest = (d: Destination) => {
-    if (!tx) {
-      return
-    }
-    tx.setDests([d])
-    setTx({...tx})
-  }
   const setTo = (to: Buffer) => {
     if (!tx) {
       return
@@ -172,7 +165,7 @@ export default function TransactionPage() {
     } else {
       tx.setDests([new Destination(to, tx.dests[0].getAmount(), tx.dests[0].getMessage())])
     }
-    setDest(dests[0])
+    setTx({...tx})
   }
   const setAmount = (amount: Buffer) => {
     if (!tx) {
@@ -186,7 +179,7 @@ export default function TransactionPage() {
       const amountBigInt = toBigIntBE(amount)
       tx.setDests([new Destination(tx.dests[0].getAddress(), amountBigInt, tx.dests[0].getMessage())])
     }
-    setDest(dests[0])
+    setTx({...tx})
   }
   const setMessage = (message: Buffer) => {
     if (!tx) {
@@ -198,7 +191,7 @@ export default function TransactionPage() {
     } else {
       tx.setDests([new Destination(tx.dests[0].getAddress(), tx.dests[0].getAmount(), message)])
     }
-    setDest(dests[0])
+    setTx({...tx})
   }
 
   const setFee = (fee: Buffer) => {
