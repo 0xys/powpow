@@ -413,7 +413,7 @@ export default function TransactionPage() {
         </Heading>
         <p>{text.sender}</p>
         <SimpleGrid columns={16}>
-          {signed ? fullHexArray.map((v, i) => <OctetSmall index={i} hex={v} color={i >= txBlobLength ? 'blue.500': 'orange.500'}/>):hexArray.map((v, i) => <OctetSmall index={i} hex={v} color='orange.500'/>)}
+          {signed ? fullHexArray.map((v, i) => <OctetSmall index={i} hex={v} color={i >= txBlobLength ? 'blue.500': 'orange.500'} key={i}/>):hexArray.map((v, i) => <OctetSmall index={i} hex={v} color='orange.500' key={i}/>)}
         </SimpleGrid>
         <Button onClick={onSendButtonClicked} colorScheme={'blue'}>
           トランザクションを送信
