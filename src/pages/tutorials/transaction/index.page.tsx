@@ -121,18 +121,18 @@ const SentResult = (prop: {
       <Text>【Sequence】に現在のシークエンス番号＋１の値を入れてください</Text>
     </>)
   }
-  if (tx.getDests()[0].getAmount() + BigInt(defaultFee) > BigInt(senders[senderIndex].balance)) {
+  if (tx.getDests()[0].getAmount() + tx.getFee() > BigInt(senders[senderIndex].balance)) {
     return (<>
       <Badge colorScheme='red' variant='solid' fontSize='1.2em'>拒否</Badge>
       <Text>無効なトランザクション： 残高が足りません</Text>
       <Text>【Amount】と【Fee】の合計だけ残高が必要です</Text>
     </>)
   }
-  if (tx.fee < BigInt(defaultFee)) {
+  if (tx.getFee() < BigInt(defaultFee)) {
     return (<>
       <Badge colorScheme='red' variant='solid' fontSize='1.2em'>拒否</Badge>
       <Text>無効なトランザクション： 手数料が安すぎです。</Text>
-      <Text>本サイトでは最低手数料を100に固定しています。多くのブロックチェーンでもDDoS対策として最低手数料を設定しています。手数料相場によって変動することもあります。</Text>
+      <Text>本サイトでは最低手数料を100に固定しています。多くのブロックチェーンでもDDoS対策として最低手数料を設定しています。また、手数料には相場があり、ブロックチェーンの混雑具合によって変動するので、時と場合によっては必要な手数料が異なる場合があります。</Text>
     </>)
   }
 
