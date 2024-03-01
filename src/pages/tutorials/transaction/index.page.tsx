@@ -460,7 +460,7 @@ export default function TransactionPage() {
         </Heading>
         <Box>
           <VStack align={'baseline'}>
-            <Text>ブロックチェーンのノードはインターネットから受け付けるトランザクションを検証して、有効なトランザクションのみを未採掘ブロックに追加するトランザクション候補にします。</Text>
+            <Text>ブロックチェーンのノードはインターネットから受け付けるトランザクションを検証して、有効なトランザクションのみを未採掘ブロックに追加する候補にします。</Text>
             <Text>検証する項目はブロックチェーンによって異なりますが、概ね以下のような項目をチェックしています。</Text>
             <Text fontWeight={'bold'}>①署名の有効性</Text>
             <Text fontWeight={'bold'}>②残高が足りているか</Text>

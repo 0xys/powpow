@@ -14,6 +14,7 @@ function MyApp({ Component, pageProps }: AppProps) {
           <Link href="/tutorials/hash">ハッシュ関数とは</Link>
           <Link href="/tutorials/signature">電子署名とは</Link>
           <Link href="/tutorials/transaction">トランザクションとは</Link>
+          <Link href="/tutorials/block">ブロックとは</Link>
           <Link href="/tutorials/pow">マイニングとは</Link>
         </HStack>
         <Layout>
