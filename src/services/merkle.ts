@@ -6,9 +6,6 @@ import { createHash } from "crypto"
  * https://developer.bitcoin.org/reference/block_chain.html#merkle-trees
  * */ 
 export const merkle = (items: Buffer[]): Buffer => {
-    if (items.length == 0) {
-        throw new Error(`cannot calculate root from empty merkle tree`)
-    }
     if (items.length == 1) {
         return items[0]
     }
