@@ -175,7 +175,7 @@ export default function BlockPage() {
           </Heading>
           {isOpened ? <Badge colorScheme='green' variant='outline' fontSize='1.2em'>受付中</Badge> : <Badge colorScheme='red' variant='outline' fontSize='1.2em'>受付停止中</Badge>}
         </HStack>
-        
+
         <VStack>
           <VStack alignItems={'start'}>
             <Text>ノードは集まったトランザクションを検証し、受け付けるかどうか判定します。</Text>
@@ -232,6 +232,7 @@ export default function BlockPage() {
       <Button onClick={onResetButtonClicked} backgroundColor={'red.500'} color={'white'}>リセット</Button>
     </VStack>)
 }
+
 function toast(arg0: { title: string; status: string; duration: number; isClosable: boolean; }) {
   throw new Error("Function not implemented.");
 }

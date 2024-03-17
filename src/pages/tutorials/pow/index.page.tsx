@@ -1,5 +1,5 @@
-import { Box, VStack, HStack, Input, Text, Button, Divider, Heading, ButtonGroup, IconButton, Textarea, InputGroup, InputLeftAddon, useToast, Alert, AlertIcon, AlertTitle, SimpleGrid, Center, Badge } from '@chakra-ui/react'
-import { AddIcon, CopyIcon } from '@chakra-ui/icons'
+import { Box, VStack, HStack, Input, Text, Button, Divider, Heading, ButtonGroup, IconButton, Textarea, InputGroup, InputLeftAddon, useToast, Alert, AlertIcon, AlertTitle, SimpleGrid, Center, Badge, SliderFilledTrack, SliderTrack, SliderThumb, Slider, SliderMark, Tag, Icon } from '@chakra-ui/react'
+import { AddIcon, CopyIcon, SettingsIcon } from '@chakra-ui/icons'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import crypto from 'crypto'
 import { createHash } from 'crypto';
@@ -7,7 +7,7 @@ import { hexFont } from '../../components/hex/hexOneline';
 import { HexOnelineView } from '../../components/hex/hexOnelineView';
 import { BlockHeader } from '../../../types/blockchain/blockHeader';
 import React from 'react';
-import { toBigIntBE } from 'bigint-buffer';
+import { toBigIntBE, toBigIntLE, toBufferBE, toBufferLE } from 'bigint-buffer';
 import styles from '../../../styles/Layout.module.css';
 
 import text from '../../../texts/mining.json'
@@ -29,6 +29,101 @@ const Octet = (prop: {
     >
       {prop.hex}
     </Center>)
+}
+
+Octet.displayName = 'Octet'
+
+const CircleIcon = (props: any) => (
+  <Icon viewBox='0 0 200 200' {...props}>
+    <path
+      fill='currentColor'
+      d='M 100, 100 m -75, 0 a 75,75 0 1,0 150,0 a 75,75 0 1,0 -150,0'
+    />
+  </Icon>
+)
+
+const defaultSliderValue = 70
+const mediumValue = 90
+const difficultValue = 170
+const moreDifficultValue = 250
+const DifficultyPanel = (prop: {
+  index: number,
+}) => {
+  const [sliderValue, setSliderValue] = React.useState(defaultSliderValue)
+  const labelStyles = {
+    mt: '4',
+    ml: '-1',
+    fontSize: 'sm',
+  }
+  const [bg, fg, colorScheme, diffLabel] = useMemo(() => {
+    if (sliderValue == 10) {
+      return ['blue.100', 'blue.500', 'blue', 'MIN']
+    } else if (sliderValue < mediumValue) {
+      return ['green.100', 'green.400', 'green', '簡単']
+    } else if (sliderValue >= mediumValue && sliderValue < difficultValue) {
+      return ['yellow.100', 'yellow.400', 'yellow', '普通']
+    } else if (sliderValue >= difficultValue && sliderValue < moreDifficultValue) {
+      return ['orange.100', 'orange.400', 'orange', '難しい']
+    } else if (sliderValue < 320) {
+      return ['red.100', 'red.400', 'red', 'とても難しい']
+    } else {
+      return ['purple.100', 'purple.500', 'purple', 'MAX']
+    }
+  }, [sliderValue])
+
+  const difficulty = useMemo(() => {
+    const bit = sliderValue/10 // 0-32
+    if (bit == 0) {
+      return BigInt(0)
+    }
+    if (bit == 32) {
+      return BigInt(0xffffffff) // max
+    }
+    return BigInt((0x01 << (bit-1)) - 1)
+  }, [sliderValue])
+
+  const workTarget = useMemo(() => {
+    const workTarget = getWorkTarget(difficulty)
+    return workTarget
+  }, [difficulty])
+
+  const [hashStart, hashEnd] = useMemo(() => {
+    if (workTarget == BigInt(0)) {
+      return ['00000000', '00000000']
+    }
+    return ['00000000', toBufferLE(workTarget, 4).toString('hex'), ]
+  }, [workTarget])
+
+  return (
+    <VStack alignItems={'start'} spacing={'10'}>
+      <Slider defaultValue={defaultSliderValue} min={10} max={320} step={10} width={'2xl'} onChange={setSliderValue}>
+        <SliderTrack bg={bg}>
+          <SliderFilledTrack bg={fg} />
+        </SliderTrack>
+        <SliderMark value={mediumValue} {...labelStyles}>
+          普通
+        </SliderMark>
+        <SliderMark value={difficultValue} {...labelStyles}>
+          難しい
+        </SliderMark>
+        <SliderMark value={moreDifficultValue} {...labelStyles}>
+          とても難しい
+        </SliderMark>
+        <SliderThumb boxSize={6}>
+          <Box color={fg} as={CircleIcon} />
+        </SliderThumb>
+      </Slider>
+      <VStack alignItems={'start'}>
+        <HStack>
+          <Text fontFamily={'Courier'}>難易度：0x{toBufferBE(difficulty, 4).toString('hex')}</Text>
+          <Tag size={'md'} variant='solid' colorScheme={colorScheme}>{diffLabel}</Tag>
+        </HStack>
+        <Text fontFamily={'Courier'}>ターゲット：0x{toBufferBE(workTarget, 4).toString('hex')}</Text>
+        <Text fontFamily={'Courier'}>ブロックハッシュが 0x{hashStart}00... 〜 0x{hashEnd}ff... の間ならマイニング成功</Text>
+      </VStack>
+      
+    </VStack>
+  )
 }
 
 Octet.displayName = 'Octet'
@@ -152,7 +247,7 @@ export default function Pow() {
     if (!blockHeader) {
       return
     }
-    blockHeader.setDifficultyTarget(b)
+    blockHeader.setDifficulty(b)
     setBlockHeader({...blockHeader})
   }
   const setMerkleRoot = (b: Buffer) => {
@@ -181,7 +276,7 @@ export default function Pow() {
       }
       let nonce = blockHeader.getNonce()
       nonce = nonce + BigInt(1)
-      console.log(miningStatus, nonce, blockHeader.getDifficultyTargetBuffer().toString('hex'))
+      console.log(miningStatus, nonce, blockHeader.getDifficultyBuffer().toString('hex'))
       blockHeader.setNonce(nonce)
 
       await new Promise(resolve => setTimeout(resolve, 100))
@@ -240,55 +335,79 @@ export default function Pow() {
   }
 
   return (
-    <VStack className={styles.block}>
-      <Heading>
-        ブロックへッダ
-      </Heading>
-      <HexOnelineEdit title='Version' hex={blockHeader?.getVersionBuffer()} byteLength={4} hexLength={68} setValue={setVersion} focused={label=='version'} anyError={onError(0)}/>
-      <HexOnelineEdit title='Height' hex={blockHeader?.getHeightBuffer()} byteLength={4} hexLength={68} setValue={setHeight} focused={label=='height'} anyError={onError(1)}/>
-      <HexOnelineEdit title='Prev Block Hash' hex={blockHeader?.getPrevBlockHash()} byteLength={32} hexLength={68} setValue={setPrevBlockHash} focused={label=='prevBlockHash'} anyError={onError(2)}/>
-      <HexOnelineEdit title='Difficulty' hex={blockHeader?.getDifficultyTargetBuffer()} byteLength={4} hexLength={68} setValue={setDifficultyTarget} focused={label=='diffTarget'} anyError={onError(3)}/>
-      <HexOnelineEdit title='Merkle Root' hex={blockHeader?.getMerkleRoot()} byteLength={32} hexLength={68} setValue={setMerkleRoot} focused={label=='merkleRoot'} anyError={onError(4)}/>
-      {miningStatus == 'mining' ? (
-        <HexOnelineCannotEdit title='Nonce' hex={blockHeader?.getNonceBuffer()} hexLength={68} focused={label=='nonce'} />
-      ) : (
-        <HexOnelineEdit title='Nonce' hex={blockHeader?.getNonceBuffer()} byteLength={4} hexLength={68} setValue={setNonce} focused={label=='nonce'} anyError={onError(5)}/>
-      )}
-      <SimpleGrid columns={16} onMouseLeave={e => onLeave()}>
-        {hexArray.map((v, i) => <Octet index={i} hex={v} selected={!!selectionArray? selectionArray[i]: false} onHover={onHover} key={i}/>)}
-      </SimpleGrid>
-      <Center>
-        <HexOnelineView title={'Block Hash'} hex={hash} size={68} copy={copy} titleLength={20}/>
-      </Center>
-      <HStack>
-        <Button disabled={ miningStatus == 'not_ready' || miningStatus == 'mined' } colorScheme='teal' onClick={() => {
-          if(miningStatus == 'ready') {
-            setMiningStatus('mining')
-          }else if (miningStatus == 'mining'){
-            setMiningStatus('ready')  // cancel mining
-          }
-        }} isLoading={miningStatus=='mining'} loadingText='Mining...' spinnerPlacement='start'>{mineButtonText}</Button>
-        {miningStatus == 'mined' ? <Badge colorScheme='green' variant='outline' fontSize='1.2em'>Done</Badge> : <></>}
-      </HStack>
-      
-      <ul>
-        <li>Version: {text.version}</li>
-        <li>Height: {text.height}</li>
-        <li>Prev Block Hash: {text.prev_block_hash}</li>
-        <li>Difficulty: {text.difficulty}</li>
-        <li>Merkle Root: {text.merkle_root}</li>
-        <li>Nonce: {text.nonce}</li>
-        <li>Block Hash: {text.block_hash}</li>
-      </ul>
-      <Text fontSize='xl' fontWeight='bold'>マイニング作業</Text>
-      <Text>{text.mining}</Text>
+    <VStack>
+      <VStack className={styles.block}>
+        <Heading>
+          ブロックへッダ
+        </Heading>
+        <HexOnelineEdit title='Version' hex={blockHeader?.getVersionBuffer()} byteLength={4} hexLength={68} setValue={setVersion} focused={label=='version'} anyError={onError(0)}/>
+        <HexOnelineEdit title='Height' hex={blockHeader?.getHeightBuffer()} byteLength={4} hexLength={68} setValue={setHeight} focused={label=='height'} anyError={onError(1)}/>
+        <HexOnelineEdit title='Prev Block Hash' hex={blockHeader?.getPrevBlockHash()} byteLength={32} hexLength={68} setValue={setPrevBlockHash} focused={label=='prevBlockHash'} anyError={onError(2)}/>
+        <HexOnelineEdit title='Difficulty' hex={blockHeader?.getDifficultyBuffer()} byteLength={4} hexLength={68} setValue={setDifficultyTarget} focused={label=='diffTarget'} anyError={onError(3)}/>
+        <HexOnelineEdit title='Merkle Root' hex={blockHeader?.getMerkleRoot()} byteLength={32} hexLength={68} setValue={setMerkleRoot} focused={label=='merkleRoot'} anyError={onError(4)}/>
+        {miningStatus == 'mining' ? (
+          <HexOnelineCannotEdit title='Nonce' hex={blockHeader?.getNonceBuffer()} hexLength={68} focused={label=='nonce'} />
+        ) : (
+          <HexOnelineEdit title='Nonce' hex={blockHeader?.getNonceBuffer()} byteLength={4} hexLength={68} setValue={setNonce} focused={label=='nonce'} anyError={onError(5)}/>
+        )}
+        <SimpleGrid columns={16} onMouseLeave={e => onLeave()}>
+          {hexArray.map((v, i) => <Octet index={i} hex={v} selected={!!selectionArray? selectionArray[i]: false} onHover={onHover} key={i}/>)}
+        </SimpleGrid>
+        <Center>
+          <HexOnelineView title={'Block Hash'} hex={hash} size={68} copy={copy} titleLength={20}/>
+        </Center>
+        <HStack>
+          <Button disabled={ miningStatus == 'not_ready' || miningStatus == 'mined' } colorScheme='teal' onClick={() => {
+            if(miningStatus == 'ready') {
+              setMiningStatus('mining')
+            }else if (miningStatus == 'mining'){
+              setMiningStatus('ready')  // cancel mining
+            }
+          }} isLoading={miningStatus=='mining'} loadingText='Mining...' spinnerPlacement='start'>{mineButtonText}</Button>
+          {miningStatus == 'mined' ? <Badge colorScheme='green' variant='outline' fontSize='1.2em'>Done</Badge> : <></>}
+        </HStack>
+        
+        <ul>
+          <li>Version: {text.version}</li>
+          <li>Height: {text.height}</li>
+          <li>Prev Block Hash: {text.prev_block_hash}</li>
+          <li>Difficulty: {text.difficulty}</li>
+          <li>Merkle Root: {text.merkle_root}</li>
+          <li>Nonce: {text.nonce}</li>
+          <li>Block Hash: {text.block_hash}</li>
+        </ul>
+        <Text fontSize='xl' fontWeight='bold'>マイニング作業</Text>
+        <Text>{text.mining}</Text>
+      </VStack>
+      <VStack className={styles.toolblock}>
+        <Heading>難易度目安</Heading>
+        <DifficultyPanel index={0}/>
+      </VStack>
     </VStack>
+   
   )
 }
 
 const checkIfMined = (blockHeader: BlockHeader): boolean => {
   const work = toBigIntBE(blockHeader.hash().slice(0, 4))
-  return work <= blockHeader.getDifficultyTarget()
+  const targetHex = Buffer.from(getWorkTargetFromHeader(blockHeader).toString(16), 'hex')
+  const target = toBigIntLE(targetHex)
+  return work <= target
+}
+
+const getWorkTargetFromHeader = (blockHeader: BlockHeader): bigint => {
+  return getWorkTarget(blockHeader.getDifficulty())
+}
+
+const MostDifficultTarget = BigInt(0x00000000)
+const EasiestTarget = toBigIntBE(Buffer.alloc(4, 0xff))
+/**
+ * most difficult target: 0x00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+ * easiest target       : 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+ * @param blockHeader 
+ */
+const getWorkTarget = (difficulty: bigint): bigint => {
+  return EasiestTarget - difficulty
 }
 
 const getMineButtonText = (miningStatus: MiningStatus): string => {

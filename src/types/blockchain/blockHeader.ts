@@ -2,7 +2,7 @@ import { toBigIntBE, toBufferBE } from "bigint-buffer"
 import { createHash } from 'crypto';
 
 export class BlockHeader {
-    difficultyTarget: bigint
+    difficulty: bigint
     version: bigint
     height: bigint
     prevBlockHash: Buffer
@@ -14,7 +14,7 @@ export class BlockHeader {
         prevBlockHash: Buffer,
         merkleRoot: Buffer,
         nonce: bigint,
-        difficultyTarget?: bigint)
+        difficulty?: bigint)
     {
         this.version = version
         this.height = height
@@ -22,11 +22,11 @@ export class BlockHeader {
         this.merkleRoot = merkleRoot
         this.nonce = nonce
 
-        if (difficultyTarget) {
-            this.difficultyTarget = difficultyTarget
+        if (difficulty) {
+            this.difficulty = difficulty
         }else{
             //  initial difficulty
-            this.difficultyTarget = toBigIntBE(Buffer.from([0x00, 0xff, 0xff, 0xff]))
+            this.difficulty = toBigIntBE(Buffer.from([0x00, 0x00, 0x00, 0x00]))
         }
     }
 
@@ -64,14 +64,14 @@ export class BlockHeader {
     }
 
     //  4 byte
-    getDifficultyTarget = (): bigint => {
-        return this.difficultyTarget
+    getDifficulty = (): bigint => {
+        return this.difficulty
     }
-    getDifficultyTargetBuffer = (): Buffer => {
-        return toBufferBE(this.difficultyTarget, 4)
+    getDifficultyBuffer = (): Buffer => {
+        return toBufferBE(this.difficulty, 4)
     }
-    setDifficultyTarget = (difficultyTarget: Buffer) => {
-        this.difficultyTarget = toBigIntBE(difficultyTarget)
+    setDifficulty = (difficulty: Buffer) => {
+        this.difficulty = toBigIntBE(difficulty)
     }
 
     // 32 byte
@@ -102,7 +102,7 @@ export class BlockHeader {
         bufs.push(this.getVersionBuffer())
         bufs.push(this.getHeightBuffer())
         bufs.push(this.prevBlockHash)
-        bufs.push(this.getDifficultyTargetBuffer())
+        bufs.push(this.getDifficultyBuffer())
         bufs.push(this.merkleRoot)
         bufs.push(this.getNonceBuffer())
 
