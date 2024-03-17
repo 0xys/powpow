@@ -1,7 +1,7 @@
 import { toBigIntBE, toBufferBE } from 'bigint-buffer'
 import { Transaction } from './transaction'
 import { createHash } from 'crypto';
-import { merkle } from '../../services/merkle';
+import { merkle } from '../../utils/merkle';
 
 export class Block {
     private difficultyTarget: bigint

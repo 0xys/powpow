@@ -242,7 +242,7 @@ export default function Pow() {
   return (
     <VStack className={styles.block}>
       <Heading>
-        マイニング
+        ブロックへッダ
       </Heading>
       <HexOnelineEdit title='Version' hex={blockHeader?.getVersionBuffer()} byteLength={4} hexLength={68} setValue={setVersion} focused={label=='version'} anyError={onError(0)}/>
       <HexOnelineEdit title='Height' hex={blockHeader?.getHeightBuffer()} byteLength={4} hexLength={68} setValue={setHeight} focused={label=='height'} anyError={onError(1)}/>

@@ -4,7 +4,7 @@ import { hexFont } from "./hexOneline"
 
 export const HexOnelineEdit = React.memo((prop: {
     title: string,
-    hex?: Uint8Array,
+    hex?: Uint8Array | Buffer,
     byteLength: number,
     hexLength?: number,
     titleLength?: number,

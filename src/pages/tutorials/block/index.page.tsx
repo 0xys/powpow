@@ -1,17 +1,21 @@
 import { CopyIcon, ExternalLinkIcon } from "@chakra-ui/icons";
-import { HStack, IconButton, Input, Image, Text, InputGroup, InputLeftAddon, Tooltip, VStack, TableContainer, Table, Thead, Tr, Th, Tbody, Td, Divider, Heading, Box, Button, Badge, StackDivider, Center, Link } from "@chakra-ui/react";
+import { HStack, IconButton, Input, Image, Text, InputGroup, InputLeftAddon, Tooltip, VStack, TableContainer, Table, Thead, Tr, Th, Tbody, Td, Divider, Heading, Box, Button, Badge, StackDivider, Center, Link, Checkbox } from "@chakra-ui/react";
 import { toBigIntBE, toBufferBE } from "bigint-buffer";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { hexFont } from "../../components/hex/hexOneline";
 import styles from '../../../styles/Layout.module.css';
-import { Destination, Transaction } from "../../../types/blockchain/transaction";
+import { Destination, Transaction, godAddress } from "../../../types/blockchain/transaction";
 import crypto from 'crypto'
 import secp256k1 from 'secp256k1'
 import { HexOnelineView } from "../../components/hex/hexOnelineView";
-import { merkle } from "../../../services/merkle";
+import { merkle } from "../../../utils/merkle";
+import { GetDistributedRandom } from "../../../utils/rand";
+import { HexOnelineEdit } from "../../components/hex/hexOnelineEditable";
 
 const blockSize = 10
 const mempoolSize = 200
+const defaultReward = 50000
+const defaultBeneficiary = Buffer.from('02125c0640bf5628541c534c8cf5bf20f506a3adac75b3d89cbd8e219683542fe8', 'hex')
 
 const TransactionView = (prop: {
   tx: Transaction,
@@ -42,6 +46,9 @@ export default function BlockPage() {
   const [isOpened, setIsOpened] = useState(false)
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [sortedTransactions, setSortedTransactions] = useState<Transaction[]>([])
+  const [includeCoinbaseTx, setIncludeCoinbaseTx] = useState(false)
+  const [beneficiaryAddr, setBeneficiaryAddr] = useState(defaultBeneficiary)
+  const [isBeneficiaryAddrValid, setIsBeneficiaryAddrValid] = useState(true)
 
   const onOpenButtonClicked = () => {
     setIsOpened(!isOpened)
@@ -62,7 +69,7 @@ export default function BlockPage() {
       const priv = crypto.randomBytes(32)
       const pub = secp256k1.publicKeyCreate(priv, true)
       const seq = getRandomInt(100000)
-      const fee = 100 + getRandomInt(200) * 10
+      const fee = Math.floor(GetDistributedRandom(100, 10000, 4))
       const amount = getRandomInt(10000)
       const priv2 = crypto.randomBytes(32)
       const pub2 = secp256k1.publicKeyCreate(priv2, true)
@@ -96,13 +103,37 @@ export default function BlockPage() {
   const [blockTransactions, sumFee, merkleRoot] = useMemo<[Transaction[], BigInt, Buffer]>(() => {
     let mr = Buffer.alloc(32)
     const original = [...sortedTransactions]
-    const block = original.slice(0, Math.min(original.length, blockSize))
-    const sum = block.reduce((acc, tx) => acc + tx.getFee(), BigInt(0))
-    if (block.length > 0) {
-      mr = merkle(block.map(x => x.hash()))
+    if (includeCoinbaseTx) {
+      let beneficiary = defaultBeneficiary
+      if (isBeneficiaryAddrValid) {
+        beneficiary = beneficiaryAddr
+      }
+      const seq = BigInt(0)
+      const fee = BigInt(0)
+      const amount = BigInt(defaultReward)
+      const tx = new Transaction(godAddress, seq, fee, [new Destination(beneficiary, amount)])
+      original.unshift(tx)
     }
-    return [block, sum, mr]
-  }, [sortedTransactions])
+    const txs = original.slice(0, Math.min(original.length, blockSize))
+    let sum = txs.reduce((acc, tx) => acc + tx.getFee(), BigInt(0))
+    if (includeCoinbaseTx) {
+      sum += BigInt(defaultReward)
+    }
+    if (txs.length > 0) {
+      mr = merkle(txs.map(x => x.hash()))
+    }
+    return [txs, sum, mr]
+  }, [sortedTransactions, includeCoinbaseTx, isBeneficiaryAddrValid])
+
+  const onError = (exist: boolean) => {
+    if (exist) {
+      setIsBeneficiaryAddrValid(false)
+    } else {
+      setIsBeneficiaryAddrValid(true)
+    }
+    return
+  }
+
 
   const copy = useCallback((text: string) => {
     navigator.clipboard.writeText(text)
@@ -152,12 +183,12 @@ export default function BlockPage() {
             <Text>メモリープールには容量があります。今回は{mempoolSize}トランザクションです。実際のブロックチェーンではバイト単位で決まっています。</Text>
           </VStack>
           <HStack alignItems='start' divider={<StackDivider borderColor='gray.200' />}>
-            <VStack>
+            <VStack alignItems={'start'}>
               {transactions.slice(0, Math.min(transactions.length, 14)).map((tx, i) => (
                 <TransactionView tx={tx} key={i} />
               ))}
             </VStack>
-            <VStack>
+            <VStack alignItems={'start'}>
               {transactions.length > 14 ? transactions.slice(14, Math.min(transactions.length, 28)).map((tx, i) => (
                 <TransactionView tx={tx} key={i} />
               )) : <></>}
@@ -180,11 +211,16 @@ export default function BlockPage() {
             <Text>合理的なノードはトランザクションの手数料が高い順に選んでいきます。</Text>
             <Text>今回はブロック容量が{blockSize}トランザクションということにしましょう。実際のブロックチェーンでは大抵バイト単位で決まっています。</Text>
           </VStack>
-          
-          {blockTransactions.map((tx, i) => (
-            <TransactionView tx={tx} key={i} />
-          ))}
-          <Text align={'center'}>{`手数料収入合計： ${sumFee} POW`}</Text>
+          <Checkbox isChecked={includeCoinbaseTx} onChange={(e) => setIncludeCoinbaseTx(e.target.checked)}>コインベース・トランザクション（後述）を含める</Checkbox>
+          <Box hidden={!includeCoinbaseTx}>
+            <HexOnelineEdit title='報酬受取アドレス' titleLength={18} hex={beneficiaryAddr} byteLength={33} hexLength={70} setValue={setBeneficiaryAddr} focused={false} anyError={onError}/>
+          </Box>
+          <VStack alignItems={'start'}>
+            {blockTransactions.map((tx, i) => (
+              <TransactionView tx={tx} key={i} />
+            ))}
+          </VStack>
+          <Text align={'center'}>{`手数料収入${includeCoinbaseTx? '➕採掘報酬 ':''}合計： ${sumFee} POW`}</Text>
           <Center>
             <HexOnelineView title={'マークルルート'} hex={merkleRoot} size={70} copy={copy} titleLength={20}/>
           </Center>

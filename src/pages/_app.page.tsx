@@ -13,9 +13,9 @@ function MyApp({ Component, pageProps }: AppProps) {
           <Link href="/tutorials/hex">16進数とは</Link>
           <Link href="/tutorials/hash">ハッシュ関数とは</Link>
           <Link href="/tutorials/signature">電子署名とは</Link>
-          <Link href="/tutorials/transaction">トランザクションとは</Link>
-          <Link href="/tutorials/block">ブロックとは</Link>
-          <Link href="/tutorials/pow">マイニングとは</Link>
+          <Link href="/tutorials/transaction">トランザクション受付</Link>
+          <Link href="/tutorials/block">ブロックボディ生成</Link>
+          <Link href="/tutorials/pow">マイニング</Link>
         </HStack>
         <Layout>
           <Component {...pageProps} />
