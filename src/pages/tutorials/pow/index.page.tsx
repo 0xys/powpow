@@ -14,6 +14,17 @@ import text from '../../../texts/mining.json'
 import { HexOnelineEdit } from '../../components/hex/hexOnelineEditable';
 import { HexOnelineCannotEdit } from '../../components/hex/hexOnelineConstant';
 
+
+const defaultBlockVersion = BigInt(1)
+const defaultBlockHash = crypto.randomBytes(32)
+const defaultPrevBlockHeight = BigInt(10000)
+const defaultPrevBlockHash = Buffer.from('00f355da97f826716da272d4f35ca2b4d24ed28d315656684cb18f6f9481f247', 'hex')
+const defaultMerkleRoot = crypto.randomBytes(32)
+const defaultDifficulty = BigInt(0x000000ff)
+const defaultBlockHeader = new BlockHeader(defaultBlockVersion, BigInt(0), defaultPrevBlockHash, defaultMerkleRoot, BigInt(0), defaultDifficulty)
+
+type MiningStatus = 'not_ready' | 'ready' | 'mining' | 'mined'
+
 const Octet = (prop: {
   index: number,
   hex: string,
@@ -30,8 +41,6 @@ const Octet = (prop: {
 }
 
 Octet.displayName = 'Octet'
-
-const defaultBlockHash = crypto.randomBytes(32)
 
 const CircleIcon = (props: any) => (
   <Icon viewBox='0 0 200 200' {...props}>
@@ -144,14 +153,103 @@ const DifficultyPanel = (prop: {
   )
 }
 
-Octet.displayName = 'Octet'
+DifficultyPanel.displayName = 'DifficultyPanel'
 
-const defaultPrevBlockHash = crypto.randomBytes(32)
-const defaultMerkleRoot = crypto.randomBytes(32)
-const defaultDifficulty = BigInt(0x000000ff)
-const defaultBlockHeader = new BlockHeader(BigInt(1), BigInt(0), defaultPrevBlockHash, defaultMerkleRoot, BigInt(0), defaultDifficulty)
+enum BlockStatus {
+  Unknown = -1,
+  OK = 0,
+  VersionError = 1,
+  HeightError = 2,
+  PrevBlockHashError = 3,
+  MerkleRootError = 4,
+  DifficultyError = 5,
+  NonceError = 6,
+}
 
-type MiningStatus = 'not_ready' | 'ready' | 'mining' | 'mined'
+const getBlockStatusText = (status: BlockStatus): string => {
+  switch (status) {
+    case BlockStatus.OK:
+      return 'あなたの採掘したブロックが承認されました'
+    case BlockStatus.VersionError:
+      return 'Versionが間違っています'
+    case BlockStatus.HeightError:
+      return 'Heightが間違っています'
+    case BlockStatus.PrevBlockHashError:
+      return 'Prev Block Hashが末端のブロックのハッシュと等しくない値です'
+    case BlockStatus.MerkleRootError:
+      return 'Merkle Rootが間違っています'
+    case BlockStatus.DifficultyError:
+      return 'Difficultyが間違っています'
+    case BlockStatus.NonceError:
+      return 'Nonceが間違っています'
+  }
+    return 'Unknown'
+}
+
+const BlockSentResult = (prop: {
+  header?: BlockHeader,
+  onStatusChanged: (status: BlockStatus) => void
+}) => {
+  const { header, onStatusChanged } = prop
+
+  const isVersionValid = useMemo(() => {
+    return header?.getVersion() == defaultBlockVersion
+  }, [header])
+
+  const isHeightValid = useMemo(() => {
+    return header?.getHeight() == defaultPrevBlockHeight + BigInt(1)
+  }, [header])
+
+  const isPrevBlockHashValid = useMemo(() => {
+    return header?.getPrevBlockHash().equals(defaultPrevBlockHash)
+  }, [header])
+
+  // const isMerkleRootValid = useMemo(() => {
+  //   return header.getMerkleRoot().equals(defaultMerkleRoot)
+  // }, [header])
+
+  const isDifficultyValid = useMemo(() => {
+    return header?.getDifficulty() == defaultDifficulty
+  }, [header])
+
+  const isNonceValid = useMemo(() => {
+    if (!header) {
+      return false
+    }
+    return checkIfMined(header)
+  }, [header])
+
+
+  const status = useMemo(() => {
+    if (!isVersionValid) {
+      return BlockStatus.VersionError
+    }
+    if (!isHeightValid) {
+      return BlockStatus.HeightError
+    }
+    if (!isPrevBlockHashValid) {
+      return BlockStatus.PrevBlockHashError
+    }
+    if (!isDifficultyValid) {
+      return BlockStatus.DifficultyError
+    }
+    if (!isNonceValid) {
+      return BlockStatus.NonceError
+    }
+    return BlockStatus.OK
+  }, [isVersionValid, isHeightValid, isPrevBlockHashValid, isDifficultyValid, isNonceValid])
+
+  useEffect(() => {
+    onStatusChanged(status)
+  }, [status])
+
+  return (<VStack>
+    <Badge colorScheme={status == BlockStatus.OK ? 'green': 'red'} variant='solid' fontSize='1.2em'>{status == BlockStatus.OK ? 'マイニング承認':'拒否'}</Badge>
+    <Text>{getBlockStatusText(status)}</Text>
+  </VStack>)
+}
+
+BlockSentResult.displayName = 'BlockSentResult'
 
 export default function Pow() {
   const [selectionArray, setSelectionArray] = useState<boolean[]>()
@@ -160,6 +258,8 @@ export default function Pow() {
   const [blockHeader, setBlockHeader] = useState<BlockHeader>()
   const [miningStatus, setMiningStatus] = useState<MiningStatus>('not_ready')
   const [headerError, setHeaderError] = useState<number[]>([0,0,0,0,0,0])
+  const [isBlockSent, setIsBlockSent] = useState(false)
+  const [blockSubmitStatus, setBlockSubmitStatus] = useState<BlockStatus>(BlockStatus.Unknown)
 
   const toast = useToast()
 
@@ -349,6 +449,16 @@ export default function Pow() {
     }
   }
 
+  const onSubmitBlockButtonClicked = () => {
+    if (!blockHeader) {
+      return
+    }
+    setIsBlockSent(true)
+  }
+
+  const onStatusChanged = (status: BlockStatus) => {
+    setBlockSubmitStatus(status)
+  }
 
   return (
     <VStack>
@@ -390,15 +500,59 @@ export default function Pow() {
           <Text fontFamily={'Courier'}>Nonce: {text.nonce}</Text>
           <Text fontFamily={'Courier'}>Block Hash: {text.block_hash}</Text>
         </VStack>
-        <Text fontSize='xl' fontWeight='bold'>マイニング作業</Text>
+        <Text fontSize='xl' fontWeight='bold'>⛏️ マイナー</Text>
         <VStack alignItems={'start'}>
           <Text fontFamily={'Courier'}>{text.mining}</Text>
           <Text fontFamily={'Courier'}>(*1): 例えば0x123456というバイト列なら0x563412というように毎バイトごとに区切って後ろから並べる方式</Text>
         </VStack>
+        <Button onClick={onSubmitBlockButtonClicked} colorScheme={'blue'}>
+          P2Pネットワークにブロックを送信
+        </Button>
       </VStack>
       <VStack className={styles.toolblock}>
-        <Heading>難易度目安</Heading>
+        <Heading size='md'>【参考】難易度目安</Heading>
         <DifficultyPanel index={0}/>
+      </VStack>
+      <VStack className={styles.toolblock}>
+        <Heading>🌐 P2Pネットワーク</Heading>
+        <VStack alignItems={'start'}>
+          <Text>P2Pネットワーク内のすべてのノードは他のノードが送ってきたブロックを検証して、有効なブロックのみを末端のブロックに繋げます。</Text>
+          <Text>検証する項目はブロックチェーンによって異なりますが、概ね以下のような項目をチェックしています。</Text>
+          <Text>①ブロックヘッダのVersionは今のバージョンに等しいか</Text>
+          <Text>②ブロックヘッダのHeightが末端のブロックの高さに+1した値になっているか</Text>
+          <Text>③ブロックヘッダのPrevBlockHashが末端のブロックハッシュに等しいか</Text>
+          <Text>④ブロックヘッダのMerkle Rootがブロックボディのマークルルートに等しいか</Text>
+          <Text>⑤ブロックボディ内のトランザクションに無効なトランザクションがないか</Text>
+          <Text>⑥ブロックヘッダのDifficultyが現在の難易度水準として有効かどうか(*1)</Text>
+          <Text>⑦ブロックハッシュがマイニング条件を満たしているか</Text>
+        </VStack>
+        <Divider />
+        <Heading size='md'>現在の末端のブロックの状態</Heading>
+        <VStack alignItems={'start'}>
+          <Text fontFamily='Courier'>バージョン: {defaultBlockVersion.toString()}</Text>
+
+          <Text fontFamily='Courier' as={blockSubmitStatus == BlockStatus.OK ? 's': 'p'}>
+            高さ: {defaultPrevBlockHeight.toString()}
+          </Text>
+          {blockSubmitStatus == BlockStatus.OK ?
+            <Text fontFamily='Courier' fontWeight={'bold'} color={'green'}>
+              高さ：{blockHeader?.getHeight().toString(10)}
+            </Text>:<></>
+          }
+
+          <Text fontFamily='Courier' as={blockSubmitStatus == BlockStatus.OK ? 's': 'p'}>
+            ブロックハッシュ: {defaultPrevBlockHash.toString('hex')}
+          </Text>
+          {blockSubmitStatus == BlockStatus.OK ?
+            <Text fontFamily='Courier' fontWeight={'bold'} color={'green'}>
+              ブロックハッシュ: {blockHeader?.hash().toString('hex')}
+            </Text>:<></>
+          }
+          
+          <Text fontFamily='Courier'>難易度: 0x000000{defaultDifficulty.toString(16)}</Text>
+        </VStack>
+        <Divider />
+        {isBlockSent ? <BlockSentResult header={blockHeader} onStatusChanged={onStatusChanged} /> : <Text>まだ新しいブロックが発見されていません</Text>}
       </VStack>
     </VStack>)
 }
