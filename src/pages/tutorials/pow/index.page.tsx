@@ -89,28 +89,21 @@ const DifficultyPanel = (prop: {
     return BigInt((0x01 << (bit-1)) - 1)
   }, [sliderValue])
 
-  const workTarget = useMemo(() => {
-    const workTarget = getWorkTarget(difficulty)
-    return workTarget
+  const target = useMemo(() => {
+    return getWorkTarget(difficulty)
   }, [difficulty])
 
-  const [hashStart, hashEnd] = useMemo(() => {
-    if (workTarget == BigInt(0)) {
-      return ['00000000', '00000000']
-    }
-    return ['00000000', toBufferBE(workTarget, 4).toString('hex'), ]
-  }, [workTarget])
-
-  const [workTargetBE, workTargetLE] = useMemo(() => {
-    return [toBufferBE(workTarget, 4).toString('hex'), toBufferBE(workTarget, 4).toString('hex')]
-  }, [workTarget])
+  const [targetBE, targetLE] = useMemo(() => {
+    // targetはすでにリトルエンディアンになっているので、そのままBEに変換したものがLEになる
+    return [toBufferLE(target, 4).toString('hex'), toBufferBE(target, 4).toString('hex')]
+  }, [target])
 
   useEffect(() => {
     if(!blockHash) {
       return
     }
-    setMiningStatus(mined(blockHash.slice(0,4), toBufferBE(workTarget, 4)))
-  }, [blockHash, workTarget, sliderValue])
+    setMiningStatus(mined(blockHash.slice(0,4), toBufferBE(target, 4)))
+  }, [blockHash, target, sliderValue])
 
   return (
     <VStack alignItems={'start'} spacing={'10'}>
@@ -136,14 +129,14 @@ const DifficultyPanel = (prop: {
           <Text fontFamily={'Courier'}>難易度：0x{toBufferBE(difficulty, 4).toString('hex')}</Text>
           <Tag size={'md'} variant='solid' colorScheme={colorScheme}>{diffLabel}</Tag>
         </HStack>
-        <Text fontFamily={'Courier'}>ターゲット：0x{workTargetBE}</Text>
-        <Text fontFamily={'Courier'}>ターゲット（リトルエンディアン）：0x{workTargetLE}</Text>
-        <Text fontFamily={'Courier'}>ブロックハッシュが 0x{hashStart}00... 〜 0x{hashEnd}ff... の間ならマイニング成功</Text>
+        <Text fontFamily={'Courier'}>ターゲット：0x{targetBE}</Text>
+        <Text fontFamily={'Courier'}>ターゲット（リトルエンディアン）：0x{targetLE}</Text>
+        <Text fontFamily={'Courier'}>ブロックハッシュが 0x0000000000... 〜 0x{targetLE}ff... の間ならマイニング成功</Text>
       </VStack>
       <VStack>
         <Text fontWeight={'bold'}>試してみよう</Text>
         <HexOnelineEdit title='ブロックハッシュ' hex={blockHash} byteLength={32} hexLength={66} setValue={setBlockHash} focused={false} anyError={() => {}}/>
-        <Text fontFamily={'Courier'}>ターゲットのリトルエンディアンが{workTargetLE}</Text>
+        <Text fontFamily={'Courier'}>ターゲットのリトルエンディアンが{targetLE}</Text>
         <Text fontFamily={'Courier'}>ブロックハッシュの先頭４バイトが{blockHash?.slice(0,4).toString('hex')}</Text>
         <Text color={miningSuccess?'green.600':'red.400'} fontWeight={'bold'}>マイニング{miningSuccess?'成功':'失敗'}</Text>
       </VStack>
@@ -398,7 +391,10 @@ export default function Pow() {
           <Text fontFamily={'Courier'}>Block Hash: {text.block_hash}</Text>
         </VStack>
         <Text fontSize='xl' fontWeight='bold'>マイニング作業</Text>
-        <Text fontFamily={'Courier'}>{text.mining}</Text>
+        <VStack alignItems={'start'}>
+          <Text fontFamily={'Courier'}>{text.mining}</Text>
+          <Text fontFamily={'Courier'}>(*1): 例えば0x123456というバイト列なら0x563412というように毎バイトごとに区切って後ろから並べる方式</Text>
+        </VStack>
       </VStack>
       <VStack className={styles.toolblock}>
         <Heading>難易度目安</Heading>
