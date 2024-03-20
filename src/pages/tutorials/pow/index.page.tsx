@@ -26,12 +26,12 @@ const Octet = (prop: {
     fontFamily={hexFont}
     background={prop.selected ? 'blue.300': 'white'}
     onMouseEnter={(e: any) => prop.onHover(prop.index)}
-    >
-      {prop.hex}
-    </Center>)
+    >{prop.hex}</Center>)
 }
 
 Octet.displayName = 'Octet'
+
+const defaultBlockHash = crypto.randomBytes(32)
 
 const CircleIcon = (props: any) => (
   <Icon viewBox='0 0 200 200' {...props}>
@@ -50,6 +50,13 @@ const DifficultyPanel = (prop: {
   index: number,
 }) => {
   const [sliderValue, setSliderValue] = React.useState(defaultSliderValue)
+  const [blockHash, setBlockHash] = React.useState<Buffer>()
+  const [miningSuccess, setMiningStatus] = React.useState(false)
+
+  useEffect(() => {
+    setBlockHash(defaultBlockHash)
+  }, [])
+
   const labelStyles = {
     mt: '4',
     ml: '-1',
@@ -91,8 +98,19 @@ const DifficultyPanel = (prop: {
     if (workTarget == BigInt(0)) {
       return ['00000000', '00000000']
     }
-    return ['00000000', toBufferLE(workTarget, 4).toString('hex'), ]
+    return ['00000000', toBufferBE(workTarget, 4).toString('hex'), ]
   }, [workTarget])
+
+  const [workTargetBE, workTargetLE] = useMemo(() => {
+    return [toBufferBE(workTarget, 4).toString('hex'), toBufferBE(workTarget, 4).toString('hex')]
+  }, [workTarget])
+
+  useEffect(() => {
+    if(!blockHash) {
+      return
+    }
+    setMiningStatus(mined(blockHash.slice(0,4), toBufferBE(workTarget, 4)))
+  }, [blockHash, workTarget, sliderValue])
 
   return (
     <VStack alignItems={'start'} spacing={'10'}>
@@ -118,17 +136,27 @@ const DifficultyPanel = (prop: {
           <Text fontFamily={'Courier'}>難易度：0x{toBufferBE(difficulty, 4).toString('hex')}</Text>
           <Tag size={'md'} variant='solid' colorScheme={colorScheme}>{diffLabel}</Tag>
         </HStack>
-        <Text fontFamily={'Courier'}>ターゲット：0x{toBufferBE(workTarget, 4).toString('hex')}</Text>
+        <Text fontFamily={'Courier'}>ターゲット：0x{workTargetBE}</Text>
+        <Text fontFamily={'Courier'}>ターゲット（リトルエンディアン）：0x{workTargetLE}</Text>
         <Text fontFamily={'Courier'}>ブロックハッシュが 0x{hashStart}00... 〜 0x{hashEnd}ff... の間ならマイニング成功</Text>
       </VStack>
-      
+      <VStack>
+        <Text fontWeight={'bold'}>試してみよう</Text>
+        <HexOnelineEdit title='ブロックハッシュ' hex={blockHash} byteLength={32} hexLength={66} setValue={setBlockHash} focused={false} anyError={() => {}}/>
+        <Text fontFamily={'Courier'}>ターゲットのリトルエンディアンが{workTargetLE}</Text>
+        <Text fontFamily={'Courier'}>ブロックハッシュの先頭４バイトが{blockHash?.slice(0,4).toString('hex')}</Text>
+        <Text color={miningSuccess?'green.600':'red.400'} fontWeight={'bold'}>マイニング{miningSuccess?'成功':'失敗'}</Text>
+      </VStack>
     </VStack>
   )
 }
 
 Octet.displayName = 'Octet'
 
-const defaultBlockHeader = new BlockHeader(BigInt(1), BigInt(0), crypto.randomBytes(32), crypto.randomBytes(32), BigInt(0))
+const defaultPrevBlockHash = crypto.randomBytes(32)
+const defaultMerkleRoot = crypto.randomBytes(32)
+const defaultDifficulty = BigInt(0x000000ff)
+const defaultBlockHeader = new BlockHeader(BigInt(1), BigInt(0), defaultPrevBlockHash, defaultMerkleRoot, BigInt(0), defaultDifficulty)
 
 type MiningStatus = 'not_ready' | 'ready' | 'mining' | 'mined'
 
@@ -142,6 +170,7 @@ export default function Pow() {
 
   const toast = useToast()
 
+  // to avoid Hydration errors at Octet grid: https://nextjs.org/docs/messages/react-hydration-error
   useEffect(() => {
     setBlockHeader(defaultBlockHeader)
   }, [])
@@ -294,13 +323,6 @@ export default function Pow() {
     }
   }, [blockHeader, miningStatus])
 
-  const isMined = useMemo(() => {
-    if (!blockHeader) {
-      return false
-    }
-    return checkIfMined(blockHeader)
-  }, [blockHeader])
-
   useEffect(() => {
     if (!blockHeader) {
       return
@@ -334,6 +356,7 @@ export default function Pow() {
     }
   }
 
+
   return (
     <VStack>
       <VStack className={styles.block}>
@@ -351,7 +374,7 @@ export default function Pow() {
           <HexOnelineEdit title='Nonce' hex={blockHeader?.getNonceBuffer()} byteLength={4} hexLength={68} setValue={setNonce} focused={label=='nonce'} anyError={onError(5)}/>
         )}
         <SimpleGrid columns={16} onMouseLeave={e => onLeave()}>
-          {hexArray.map((v, i) => <Octet index={i} hex={v} selected={!!selectionArray? selectionArray[i]: false} onHover={onHover} key={i}/>)}
+          {hexArray.map((v, i) => <Octet index={i} hex={v} selected={!!selectionArray ? selectionArray[i]: false} onHover={onHover} key={i}/>)}
         </SimpleGrid>
         <Center>
           <HexOnelineView title={'Block Hash'} hex={hash} size={68} copy={copy} titleLength={20}/>
@@ -366,34 +389,50 @@ export default function Pow() {
           }} isLoading={miningStatus=='mining'} loadingText='Mining...' spinnerPlacement='start'>{mineButtonText}</Button>
           {miningStatus == 'mined' ? <Badge colorScheme='green' variant='outline' fontSize='1.2em'>Done</Badge> : <></>}
         </HStack>
-        
-        <ul>
-          <li>Version: {text.version}</li>
-          <li>Height: {text.height}</li>
-          <li>Prev Block Hash: {text.prev_block_hash}</li>
-          <li>Difficulty: {text.difficulty}</li>
-          <li>Merkle Root: {text.merkle_root}</li>
-          <li>Nonce: {text.nonce}</li>
-          <li>Block Hash: {text.block_hash}</li>
-        </ul>
+        <VStack alignItems={'start'}>
+          <Text fontFamily={'Courier'}>Version: {text.version}</Text>
+          <Text fontFamily={'Courier'}>Prev Block Hash: {text.prev_block_hash}</Text>
+          <Text fontFamily={'Courier'}>Difficulty: {text.difficulty}</Text>
+          <Text fontFamily={'Courier'}>Merkle Root: {text.merkle_root}</Text>
+          <Text fontFamily={'Courier'}>Nonce: {text.nonce}</Text>
+          <Text fontFamily={'Courier'}>Block Hash: {text.block_hash}</Text>
+        </VStack>
         <Text fontSize='xl' fontWeight='bold'>マイニング作業</Text>
-        <Text>{text.mining}</Text>
+        <Text fontFamily={'Courier'}>{text.mining}</Text>
       </VStack>
       <VStack className={styles.toolblock}>
         <Heading>難易度目安</Heading>
         <DifficultyPanel index={0}/>
       </VStack>
-    </VStack>
-   
-  )
+    </VStack>)
 }
 
 const checkIfMined = (blockHeader: BlockHeader): boolean => {
   const work = toBigIntBE(blockHeader.hash().slice(0, 4))
-  const targetHex = Buffer.from(getWorkTargetFromHeader(blockHeader).toString(16), 'hex')
-  const target = toBigIntLE(targetHex)
+  const target = getWorkTargetFromHeader(blockHeader)
+  return minedBigInt(work, target)
+}
+
+/**
+ * 
+ * @param work big-endian
+ * @param target big-endian
+ * @returns 
+ */
+const mined = (work: Buffer, target: Buffer): boolean => {
+  return minedBigInt(toBigIntBE(work), toBigIntBE(target))
+}
+
+/**
+ * 
+ * @param work 
+ * @param target 
+ * @returns 
+ */
+const minedBigInt = (work: bigint, target: bigint): boolean => {
   return work <= target
 }
+  
 
 const getWorkTargetFromHeader = (blockHeader: BlockHeader): bigint => {
   return getWorkTarget(blockHeader.getDifficulty())
@@ -407,7 +446,8 @@ const EasiestTarget = toBigIntBE(Buffer.alloc(4, 0xff))
  * @param blockHeader 
  */
 const getWorkTarget = (difficulty: bigint): bigint => {
-  return EasiestTarget - difficulty
+  const le = toBufferLE(EasiestTarget - difficulty, 4)
+  return toBigIntBE(le)
 }
 
 const getMineButtonText = (miningStatus: MiningStatus): string => {
