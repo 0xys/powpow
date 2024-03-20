@@ -7,7 +7,7 @@ import styles from '../../../styles/Layout.module.css';
 
 const regex = new RegExp(`^(0x)?([0-9A-Fa-f][0-9A-Fa-f])*$`)
 
-const log16 = (n: number) => {
+const log256 = (n: number) => {
   return Math.log(n)/Math.log(256)
 }
 
@@ -25,7 +25,7 @@ export default function HexPage() {
     if (decimalNum <= 0) {
       return '00'
     }else{
-      const numOfOctet = log16(Number(decimalNum)) + 1
+      const numOfOctet = Math.floor(log256(Number(decimalNum))) + 1
       return toBufferBE(decimalNum, numOfOctet).toString('hex')
     }
   }, [decimalNum])
